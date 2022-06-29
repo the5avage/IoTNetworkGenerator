@@ -1,0 +1,37 @@
+{
+    "communication-protocol" : "BLE",
+    "values" :
+    [
+        {
+            "name" : "outsideTemperature",
+            "type" : "float",
+            "default" : "NAN"
+        },
+        {
+            "name" : "insideTemperature",
+            "type" : "float"
+        }
+    ],
+    "nodes" :
+    [
+        {
+            "name" : "OutsideTemperatureSensor",
+            "writes" : [
+                "outsideTemperature"
+            ]
+        },
+        {
+            "name" : "InsideTemperatureSensor",
+            "writes" : [
+                "insideTemperature"
+            ]
+        },
+        {
+            "name" : "ControlStation",
+            "reads" : [
+                "outsideTemperature",
+                "insideTemperature"
+            ]
+        }
+    ]
+}
