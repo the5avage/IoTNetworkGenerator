@@ -2,6 +2,11 @@ import json
 import shutil
 import os
 import uuid
+import jinja2
+
+templateEnv = jinja2.Environment(
+    loader=jinja2.FileSystemLoader('TemplateServerBLE'),
+    trim_blocks=True, lstrip_blocks=True)
 
 class Value:
     def __init__(self, jsonObject):
@@ -27,12 +32,6 @@ class Config:
         for node in jsonConfig["nodes"]:
             self.nodes.append(Node(node))
 
-def indent(code, levels):
-    indentStr = '\n'
-    for i in range(levels):
-        indentStr += "    "
-    return indentStr.join(code.splitlines())
-
 serviceUUID = str(uuid.uuid4())
 
 configFile = "TestProject/ExampleConfig.json"
@@ -48,30 +47,11 @@ os.mkdir(serverDir)
 
 shutil.copyfile(os.path.join("TemplateServerBLE","Characteristic.h"), os.path.join(serverDir, "Characteristic.h"))
 
-with open(os.path.join("TemplateServerBLE", "Server.ino"), "r") as f:
-    serverINO = f.read()
-
-def generateServerDefineCharacteristis():
-    result = ""
-    for value in config.values:
-        result += f'Characteristic<{value.type}> *{value.name};\n'
-    return result
-
-def generateServerCreateCharacteristics():
-    result = ""
-    for value in config.values:
-        result += f'    {value.name} = new Characteristic<{value.type}>(\n'
-        result += f'    \"{value.uuid}\",\n'
-        result += f'    BLECharacteristic::PROPERTY_READ |\n'
-        result += f'    BLECharacteristic::PROPERTY_WRITE);\n'
-        result += f'    service->addCharacteristic({value.name});\n'
-        if value.default is not None:
-            result += f'    {value.name}->set({value.default});\n'
-    return result
-
-serverINO = serverINO.replace("CODEGEN_CREATE_CHARACTERISTICS", generateServerCreateCharacteristics())
-serverINO = serverINO.replace("CODEGEN_DEFINE_CHARACTERISTICS", generateServerDefineCharacteristis())
-serverINO = serverINO.replace("CODEGEN_SERVICE_UUID", f'\"{serviceUUID}\"')
+templateParam = {
+    'values' : config.values,
+    'service_uuid' : serviceUUID
+}
+serverINO = templateEnv.get_template('Server.ino').render(templateParam)
 
 with open(os.path.join(serverDir, "Server.ino"), "w+") as f:
     f.write(serverINO)
@@ -79,55 +59,17 @@ with open(os.path.join(serverDir, "Server.ino"), "w+") as f:
 with open(os.path.join(serverDir, ".gitignore"), "w+") as f:
     f.write("*\n")
 
-def generateLoadCharacteristics(reads, writes):
-    result = ""
-    for value in reads:
-        result += f'tmpCharacteristic = service->getCharacteristic({value.name}UUID);\n'
-        result += 'if (tmpCharacteristic == nullptr)\n'
-        result += '{\n'
-        result += '    return false;\n'
-        result += '}\n'
-        result += f'{value.name} = RemoteValueReadOnly<float>(tmpCharacteristic);\n'
-
-    for value in writes:
-        result += f'tmpCharacteristic = service->getCharacteristic({value.name}UUID);\n'
-        result += 'if (tmpCharacteristic == nullptr)\n'
-        result += '{\n'
-        result += '    return false;\n'
-        result += '}\n'
-        result += f'{value.name} = RemoteValue<float>(tmpCharacteristic);\n'
-
-    result += 'return true;\n'
-
-    return result
-
-def generateDefineCharacteristicsUUID(characteristics):
-    result = ""
-    for c in characteristics:
-        result += f'BLEUUID {c.name}UUID(\"{c.uuid}\");\n'
-    return result
-
-def generateDefineRemoteValues(reads, writes):
-    result = ""
-    for c in reads:
-        result += f'RemoteValueReadOnly<{c.type}> {c.name};\n'
-    for c in writes:
-        result += f'RemoteValue<{c.type}> {c.name};\n'
-    return result
-
 templateDir = "TemplateNodeBLE"
 templateDirSrc = os.path.join(templateDir, "src")
 templateFilesNoModify = ["GenCode.h", "RemoteValue.h", "Util.h", "Util.cpp", "Internal.h"]
+templateEnv = jinja2.Environment(
+    loader=jinja2.FileSystemLoader([templateDir, templateDirSrc]),
+    trim_blocks=True, lstrip_blocks=True)
 
 def generateNode(idx):
     node = config.nodes[idx]
     reads = list(filter(lambda v: v.name in node.reads, config.values))
     writes = list(filter(lambda v: v.name in node.writes, config.values))
-
-    defineCharacteristicsUUID = generateDefineCharacteristicsUUID(reads + writes)
-    loadCharacteristics = indent(generateLoadCharacteristics(reads, writes), 1)
-    defineRemoteValues = generateDefineRemoteValues(reads, writes)
-    declareRemoteValues = "\nextern ".join([''] + defineRemoteValues.splitlines())
 
     nodeDir = os.path.join(destinationDir, node.name)
 
@@ -144,28 +86,22 @@ def generateNode(idx):
 
     shutil.copy(os.path.join(templateDir, "Template.ino"), os.path.join(nodeDir, node.name + ".ino"))
 
-    with open(os.path.join(templateDirSrc, "Internal.cpp"), "r") as f:
-        InternalCpp = f.read()
-
-    InternalCpp = InternalCpp.replace("CODEGEN_DEFINE_CHARACTERISTICS_UUID", defineCharacteristicsUUID)
-    InternalCpp = InternalCpp.replace("CODEGEN_LOAD_CHARACTERISTICS", loadCharacteristics)
-    InternalCpp = InternalCpp.replace("CODEGEN_SERVICE_UUID", f'\"{serviceUUID}\"')
+    templateParam = {
+        'service_uuid' : serviceUUID,
+        'reads' : reads,
+        'writes' : writes
+    }
+    InternalCpp = templateEnv.get_template('Internal.cpp').render(templateParam)
 
     with open(os.path.join(nodeDirSrc, "Internal.cpp"), "w+") as f:
         f.write(InternalCpp)
 
-    with open(os.path.join(templateDirSrc, "RemoteValues.h"), "r") as f:
-        RemoteValuesH = f.read()
-
-    RemoteValuesH = RemoteValuesH.replace("CODEGEN_DECLARE_REMOTE_VALUES", declareRemoteValues)
+    RemoteValuesH = templateEnv.get_template("RemoteValues.h").render(templateParam)
 
     with open(os.path.join(nodeDirSrc, "RemoteValues.h"), "w+") as f:
         f.write(RemoteValuesH)
 
-    with open(os.path.join(templateDirSrc, "RemoteValues.cpp"), "r") as f:
-        RemoteValuesCpp = f.read()
-
-    RemoteValuesCpp = RemoteValuesCpp.replace("CODEGEN_DEFINE_REMOTE_VALUES", defineRemoteValues)
+    RemoteValuesCpp = templateEnv.get_template("RemoteValues.cpp").render(templateParam)
 
     with open(os.path.join(nodeDirSrc, "RemoteValues.cpp"), "w+") as f:
         f.write(RemoteValuesCpp)

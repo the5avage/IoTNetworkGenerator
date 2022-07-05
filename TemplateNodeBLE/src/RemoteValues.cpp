@@ -1,4 +1,9 @@
 #include "RemoteValues.h"
 #include "RemoteValue.h"
 
-CODEGEN_DEFINE_REMOTE_VALUES
+{% for value in reads %}
+RemoteValueReadOnly<{{value.type}}> {{value.name}};
+{% endfor %}
+{% for value in writes %}
+RemoteValue<{{value.type}}> {{value.name}};
+{% endfor %}

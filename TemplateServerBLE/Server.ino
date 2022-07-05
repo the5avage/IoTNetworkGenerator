@@ -3,15 +3,16 @@
 #include <BLEServer.h>
 #include "Characteristic.h"
 
-// See the following for generating UUIDs:
-// https://www.uuidgenerator.net/
 BLEServer *server;
 BLEService *service;
-CODEGEN_DEFINE_CHARACTERISTICS
+{% for v in values %}
+Characteristic<{{v.type}}> *{{v.name}};
+{% endfor %}
 
 class ServerCallbacks: public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
-      BLEDevice::startAdvertising();
+        BLEDevice::startAdvertising();
+        Serial.println("A new client connected to BLE Server.");
     };
 
     void onDisconnect(BLEServer* pServer) {
@@ -28,13 +29,21 @@ void setup()
     Serial.println(BLEDevice::getAddress().toString().c_str());
     server = BLEDevice::createServer();
     server->setCallbacks(new ServerCallbacks());
-    service = server->createService(CODEGEN_SERVICE_UUID);
+    service = server->createService("{{service_uuid}}");
 
-CODEGEN_CREATE_CHARACTERISTICS
+{% for v in values %}
+    {{v.name}} = new Characteristic<{{v.type}}>(
+        "{{v.uuid}}",
+        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
+    service->addCharacteristic({{v.name}});
+    {% if v.default %}
+    {{v.name}}->set({{v.default}});
+    {% endif %}
 
+{% endfor %}
     service->start();
     BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-    pAdvertising->addServiceUUID(CODEGEN_SERVICE_UUID);
+    pAdvertising->addServiceUUID("{{service_uuid}}");
     pAdvertising->setScanResponse(true);
     pAdvertising->setMinPreferred(0x06);
     pAdvertising->setMinPreferred(0x12);
