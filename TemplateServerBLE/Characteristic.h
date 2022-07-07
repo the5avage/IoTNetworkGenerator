@@ -18,3 +18,11 @@ public:
 
     Characteristic(const char* uuid, uint32_t properties) : BLECharacteristic(uuid, properties) {}
 };
+
+class CharacteristicCallback : public BLECharacteristicCallbacks
+{
+	void onWrite(BLECharacteristic* pCharacteristic) override
+    {
+        pCharacteristic->notify();
+    }
+};

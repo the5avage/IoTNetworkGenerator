@@ -26,6 +26,8 @@ class ServerCallbacks: public BLEServerCallbacks {
     }
 };
 
+CharacteristicCallback* characteristicCallback;
+
 void setup()
 {
     Serial.begin(115200);
@@ -38,13 +40,16 @@ void setup()
     server->setCallbacks(new ServerCallbacks());
     service = server->createService("{{service_uuid}}");
 
+    characteristicCallback = new CharacteristicCallback();
+
 {% for node in nodes %}
     {% for v in node.variables %}
         {% set name = node.name ~ '::' ~ v.name %}
     {{name}} = new Characteristic<{{v.type}}>(
         "{{v.uuid}}",
-        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
+        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY);
     service->addCharacteristic({{name}});
+    {{name}}->setCallbacks(characteristicCallback);
         {% if v.default %}
     {{name}}->set({{v.default}});
         {% endif %}

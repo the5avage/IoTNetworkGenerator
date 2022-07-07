@@ -8,6 +8,9 @@ namespace {{node.name}}
 {
     {% for v in node.variables %}
 extern RemoteValueReadOnly<{{v.type}}> {{v.name}};
+        {% if v.isObserved is defined %}
+void onChange_{{v.name}}({{v.type}});
+        {% endif %}
     {% endfor %}
 }
 

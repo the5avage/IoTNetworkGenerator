@@ -43,3 +43,15 @@ void OnDisconnect()
 {
     Serial.println("Disconnected from server");
 }
+
+void OutsideTemperatureSensor::onChange_temperature(float value)
+{
+    Serial.print("Outside temp changed to: ");
+    Serial.println(value);
+}
+
+void InsideTemperatureSensor::onChange_temperature(float value)
+{
+    Serial.print("Outside temp changed to: ");
+    Serial.println(value);
+}

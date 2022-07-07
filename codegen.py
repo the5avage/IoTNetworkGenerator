@@ -3,6 +3,7 @@ import shutil
 import os
 import uuid
 import jinja2
+import copy
 
 templateEnv = jinja2.Environment(
     loader=jinja2.FileSystemLoader('TemplateServerBLE'),
@@ -45,7 +46,12 @@ templateEnv = jinja2.Environment(
     trim_blocks=True, lstrip_blocks=True)
 
 def generateNode(thisNode):
-    otherNodes = list(filter(lambda n: n["name"] in thisNode.get("using", []), config["nodes"]))
+    otherNodes = copy.deepcopy(list(filter(lambda n: n["name"] in thisNode.get("using", []), config["nodes"])))
+    for ob in thisNode.get("observe", []):
+        obInfo = ob.split("::")
+        observedNode = next(filter(lambda n: n["name"] == obInfo[0], otherNodes))
+        observedVariable = next(filter(lambda v: v["name"] == obInfo[1], observedNode["variables"]))
+        observedVariable["isObserved"] = True
 
     nodeDir = os.path.join(destinationDir, node["name"])
 
@@ -94,12 +100,13 @@ def generateNode(thisNode):
     else:
         shutil.copy(customCodeHTemplate, customCodeH)
 
-    customCodeCpp = os.path.join(nodeDir, "CustomCode.cpp")
-    customCodeCppTemplate = os.path.join(templateDir, "CustomCode.cpp")
-    if os.path.exists(customCodeCpp):
-        shutil.copy(customCodeCppTemplate, os.path.join(nodeDir, "CustomCode.cpp_template"))
-    else:
-        shutil.copy(customCodeCppTemplate, customCodeCpp)
+    customCodeCppPath = os.path.join(nodeDir, "CustomCode.cpp")
+    customCodeCpp = templateEnv.get_template('CustomCode.cpp').render(templateParam)
+    if os.path.exists(customCodeCppPath):
+        customCodeCppPath = os.path.join(nodeDir, "CustomCode.cpp_template")
+
+    with open(customCodeCppPath, "w+") as f:
+        f.write(customCodeCpp)
 
     with open(os.path.join(nodeDir, ".gitignore"), "w+") as f:
         f.write(f'/src\n{node["name"]}.ino\n*_template\n')

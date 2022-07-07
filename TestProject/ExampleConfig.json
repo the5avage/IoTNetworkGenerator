@@ -40,6 +40,10 @@
             "using" : [
                 "OutsideTemperatureSensor",
                 "InsideTemperatureSensor"
+            ],
+            "observe" : [
+                "OutsideTemperatureSensor::temperature",
+                "InsideTemperatureSensor::temperature"
             ]
         }
     ]
