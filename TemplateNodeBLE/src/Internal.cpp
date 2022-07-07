@@ -1,34 +1,33 @@
 #include "Internal.h"
 #include "RemoteValues.h"
 
-BLEUUID serviceUUID("{{service_uuid}}");
-{% for value in reads + writes %}
-BLEUUID {{value.name}}UUID("{{value.uuid}}");
-{% endfor %}
 BLEClient *bleClient = nullptr;
 BLEAdvertisedDevice* device = nullptr;
 bool connectionReady = false;
+BLEUUID serviceUUID("{{service_uuid}}");
 
 bool loadCharacteristics(BLERemoteService* service)
 {
     BLERemoteCharacteristic* tmpCharacteristic;
 
-{% for value in reads %}
-    tmpCharacteristic = service->getCharacteristic({{value.name}}UUID);
+{% for node in otherNodes %}
+    {% for v in node.variables %}
+    tmpCharacteristic = service->getCharacteristic("{{v.uuid}}");
     if (tmpCharacteristic == nullptr)
     {
         return false;
     }
-    {{value.name}} = RemoteValueReadOnly<{{value.type}}>(tmpCharacteristic);
+    {{node.name}}::{{v.name}} = RemoteValueReadOnly<{{v.type}}>(tmpCharacteristic);
+    {% endfor %}
 {% endfor %}
 
-{% for value in writes %}
-    tmpCharacteristic = service->getCharacteristic({{value.name}}UUID);
+{% for v in thisNode.variables %}
+    tmpCharacteristic = service->getCharacteristic("{{v.uuid}}");
     if (tmpCharacteristic == nullptr)
     {
         return false;
     }
-    {{value.name}} = RemoteValue<{{value.type}}>(tmpCharacteristic);
+    {{thisNode.name}}::{{v.name}} = RemoteValue<{{v.type}}>(tmpCharacteristic);
 {% endfor %}
     return true;
 }

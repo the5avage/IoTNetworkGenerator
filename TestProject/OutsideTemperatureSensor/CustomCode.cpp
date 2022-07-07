@@ -26,7 +26,7 @@ void Loop()
         {
             Serial.print("New outside Temperature is: ");
             Serial.println(currentTemp);
-            outsideTemperature.set(currentTemp);
+            temperature.set(currentTemp);
         }
     }
     else

@@ -5,8 +5,15 @@
 
 BLEServer *server;
 BLEService *service;
-{% for v in values %}
+{% for node in nodes %}
+    {% if node.variables is defined %}
+namespace {{node.name}}
+{
+        {% for v in node.variables %}
 Characteristic<{{v.type}}> *{{v.name}};
+        {% endfor %}
+}
+    {% endif %}
 {% endfor %}
 
 class ServerCallbacks: public BLEServerCallbacks {
@@ -31,15 +38,18 @@ void setup()
     server->setCallbacks(new ServerCallbacks());
     service = server->createService("{{service_uuid}}");
 
-{% for v in values %}
-    {{v.name}} = new Characteristic<{{v.type}}>(
+{% for node in nodes %}
+    {% for v in node.variables %}
+        {% set name = node.name ~ '::' ~ v.name %}
+    {{name}} = new Characteristic<{{v.type}}>(
         "{{v.uuid}}",
         BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
-    service->addCharacteristic({{v.name}});
-    {% if v.default %}
-    {{v.name}}->set({{v.default}});
-    {% endif %}
+    service->addCharacteristic({{name}});
+        {% if v.default %}
+    {{name}}->set({{v.default}});
+        {% endif %}
 
+    {% endfor %}
 {% endfor %}
     service->start();
     BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();

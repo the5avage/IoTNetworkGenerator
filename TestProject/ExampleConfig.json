@@ -1,36 +1,45 @@
 {
     "communication-protocol" : "BLE",
-    "values" :
-    [
-        {
-            "name" : "outsideTemperature",
-            "type" : "float",
-            "default" : "NAN"
-        },
-        {
-            "name" : "insideTemperature",
-            "type" : "float"
-        }
-    ],
+
     "nodes" :
     [
         {
             "name" : "OutsideTemperatureSensor",
-            "writes" : [
-                "outsideTemperature"
+            "variables" :
+            [
+                {
+                    "name" : "temperature",
+                    "type" : "float",
+                    "default" : "NAN"
+                },
+                {
+                    "name" : "tolerance",
+                    "type" : "float",
+                    "default" : "0.1"
+                }
             ]
         },
         {
             "name" : "InsideTemperatureSensor",
-            "writes" : [
-                "insideTemperature"
+            "variables" :
+            [
+                {
+                    "name" : "temperature",
+                    "type" : "float",
+                    "default" : "NAN"
+                },
+                {
+                    "name" : "tolerance",
+                    "type" : "float",
+                    "default" : "0.1"
+                }
             ]
         },
         {
             "name" : "ControlStation",
-            "reads" : [
-                "outsideTemperature",
-                "insideTemperature"
+            "using" : [
+                "OutsideTemperatureSensor",
+                "InsideTemperatureSensor"
             ]
         }
     ]

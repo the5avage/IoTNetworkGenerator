@@ -14,7 +14,8 @@ void Loop()
     {
         float innenTemp;
         float aussenTemp;
-        if (insideTemperature.get(innenTemp) && outsideTemperature.get(aussenTemp))
+        if (InsideTemperatureSensor::temperature.get(innenTemp) && 
+            OutsideTemperatureSensor::temperature.get(aussenTemp))
         {
             Serial.print("Innentemperatur: ");
             Serial.print(innenTemp);

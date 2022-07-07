@@ -1,9 +1,20 @@
 #include "RemoteValues.h"
 #include "RemoteValue.h"
 
-{% for value in reads %}
-RemoteValueReadOnly<{{value.type}}> {{value.name}};
+{% for node in otherNodes %}
+namespace {{node.name}}
+{
+    {% for v in node.variables %}
+RemoteValueReadOnly<{{v.type}}> {{v.name}};
+    {% endfor %}
+}
+
 {% endfor %}
-{% for value in writes %}
-RemoteValue<{{value.type}}> {{value.name}};
+
+namespace {{thisNode.name}}
+{
+{% for v in thisNode.variables %}
+RemoteValue<{{v.type}}> {{v.name}};
 {% endfor %}
+}
+

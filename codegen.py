@@ -8,37 +8,15 @@ templateEnv = jinja2.Environment(
     loader=jinja2.FileSystemLoader('TemplateServerBLE'),
     trim_blocks=True, lstrip_blocks=True)
 
-class Value:
-    def __init__(self, jsonObject):
-        self.name = jsonObject["name"]
-        self.type = jsonObject["type"]
-        self.default = jsonObject.get("default")
-        self.uuid = str(uuid.uuid4())
-
-class Node:
-    def __init__(self, jsonObject):
-        self.name = jsonObject["name"]
-        self.reads = jsonObject.get("reads", [])
-        self.writes = jsonObject.get("writes", [])
-
-class Config:
-    def __init__(self, jsonConfig):
-        self.values = []
-
-        for value in jsonConfig["values"]:
-            self.values.append(Value(value))
-
-        self.nodes = []
-        for node in jsonConfig["nodes"]:
-            self.nodes.append(Node(node))
-
 serviceUUID = str(uuid.uuid4())
 
 configFile = "TestProject/ExampleConfig.json"
 destinationDir = "TestProject"
 
 with open(configFile, "r") as f:
-    config = Config(json.load(f))
+    config = json.load(f)
+
+config["service_uuid"] = serviceUUID
 
 serverDir = os.path.join(destinationDir,"Server")
 if os.path.isdir(serverDir):
@@ -47,11 +25,11 @@ os.mkdir(serverDir)
 
 shutil.copyfile(os.path.join("TemplateServerBLE","Characteristic.h"), os.path.join(serverDir, "Characteristic.h"))
 
-templateParam = {
-    'values' : config.values,
-    'service_uuid' : serviceUUID
-}
-serverINO = templateEnv.get_template('Server.ino').render(templateParam)
+for node in config["nodes"]:
+    for v in node.get("variables", []):
+        v["uuid"] = uuid.uuid4()
+
+serverINO = templateEnv.get_template('Server.ino').render(config)
 
 with open(os.path.join(serverDir, "Server.ino"), "w+") as f:
     f.write(serverINO)
@@ -61,17 +39,15 @@ with open(os.path.join(serverDir, ".gitignore"), "w+") as f:
 
 templateDir = "TemplateNodeBLE"
 templateDirSrc = os.path.join(templateDir, "src")
-templateFilesNoModify = ["GenCode.h", "RemoteValue.h", "Util.h", "Util.cpp", "Internal.h"]
+templateFilesNoModify = ["RemoteValue.h", "Util.h", "Util.cpp", "Internal.h"]
 templateEnv = jinja2.Environment(
     loader=jinja2.FileSystemLoader([templateDir, templateDirSrc]),
     trim_blocks=True, lstrip_blocks=True)
 
-def generateNode(idx):
-    node = config.nodes[idx]
-    reads = list(filter(lambda v: v.name in node.reads, config.values))
-    writes = list(filter(lambda v: v.name in node.writes, config.values))
+def generateNode(thisNode):
+    otherNodes = list(filter(lambda n: n["name"] in thisNode.get("using", []), config["nodes"]))
 
-    nodeDir = os.path.join(destinationDir, node.name)
+    nodeDir = os.path.join(destinationDir, node["name"])
 
     if not os.path.isdir(nodeDir):
         os.mkdir(nodeDir)
@@ -84,12 +60,12 @@ def generateNode(idx):
     for t in templateFilesNoModify:
         shutil.copy(os.path.join(templateDirSrc, t), nodeDirSrc)
 
-    shutil.copy(os.path.join(templateDir, "Template.ino"), os.path.join(nodeDir, node.name + ".ino"))
+    shutil.copy(os.path.join(templateDir, "Template.ino"), os.path.join(nodeDir, node["name"] + ".ino"))
 
     templateParam = {
-        'service_uuid' : serviceUUID,
-        'reads' : reads,
-        'writes' : writes
+        'otherNodes' : otherNodes,
+        'thisNode' : thisNode,
+        'service_uuid' : serviceUUID
     }
     InternalCpp = templateEnv.get_template('Internal.cpp').render(templateParam)
 
@@ -106,6 +82,11 @@ def generateNode(idx):
     with open(os.path.join(nodeDirSrc, "RemoteValues.cpp"), "w+") as f:
         f.write(RemoteValuesCpp)
 
+    GenCodeH = templateEnv.get_template("GenCode.h").render(templateParam)
+
+    with open(os.path.join(nodeDirSrc, "GenCode.h"), "w+") as f:
+        f.write(GenCodeH)
+
     customCodeH = os.path.join(nodeDir, "CustomCode.h")
     customCodeHTemplate = os.path.join(templateDir, "CustomCode.h")
     if os.path.exists(customCodeH):
@@ -121,8 +102,8 @@ def generateNode(idx):
         shutil.copy(customCodeCppTemplate, customCodeCpp)
 
     with open(os.path.join(nodeDir, ".gitignore"), "w+") as f:
-        f.write(f'/src\n{node.name}.ino\n*_template\n')
+        f.write(f'/src\n{node["name"]}.ino\n*_template\n')
 
-for i in range(len(config.nodes)):
-    print(f'generate Node: {config.nodes[i].name}')
-    generateNode(i)
+for node in config["nodes"]:
+    print(f'generate Node: {node["name"]}')
+    generateNode(node)
