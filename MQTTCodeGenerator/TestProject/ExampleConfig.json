@@ -1,0 +1,56 @@
+{
+    "communication_protocol" :
+    {
+        "name" : "MQTT",
+        "ssid" : "XXXX",
+        "password" : "XXXX",
+        "broker_address" : "XXXX",
+        "broker_port" :"1883"
+    },
+    "nodes" :
+    [
+        {
+            "name" : "OutsideTemperatureSensor",
+            "variables" :
+            [
+                {
+                    "name" : "temperature",
+                    "type" : "float",
+                    "default" : "NAN"
+                },
+                {
+                    "name" : "tolerance",
+                    "type" : "float",
+                    "default" : "0.1"
+                }
+            ]
+        },
+        {
+            "name" : "InsideTemperatureSensor",
+            "variables" :
+            [
+                {
+                    "name" : "temperature",
+                    "type" : "float",
+                    "default" : "NAN"
+                },
+                {
+                    "name" : "tolerance",
+                    "type" : "float",
+                    "default" : "0.1"
+                }
+            ]
+        },
+        {
+            "name" : "ControlStation",
+            "using" : [
+                "OutsideTemperatureSensor",
+                "InsideTemperatureSensor"
+            ],
+            "observe" : [
+                "OutsideTemperatureSensor::temperature",
+                "InsideTemperatureSensor::temperature"
+            ]
+        }
+    ]
+}
