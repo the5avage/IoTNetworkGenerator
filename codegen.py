@@ -64,6 +64,7 @@ elif protocol == "MQTT":
     templateDir = os.path.join(codeGenDir, "TemplateNodeMQTT")
 
 templateDirSrc = os.path.join(templateDir, "src")
+templateDirShared = os.path.join(codeGenDir, "TemplateNode")
 templateFilesSrc = [
     "RemoteValue.h",
     "Util.h", "Util.cpp",
@@ -72,7 +73,7 @@ templateFilesSrc = [
     "GenCode.h"]
 
 templateEnv = jinja2.Environment(
-    loader=jinja2.FileSystemLoader([templateDir, templateDirSrc]),
+    loader=jinja2.FileSystemLoader([templateDir, templateDirSrc, templateDirShared]),
     trim_blocks=True, lstrip_blocks=True)
 
 def generateNode(thisNode):
@@ -104,7 +105,7 @@ def generateNode(thisNode):
         copyTemplateFile(template, os.path.join(nodeDirSrc, template), nodeConfig, templateEnv)
 
     customCodeH = os.path.join(nodeDir, "CustomCode.h")
-    customCodeHTemplate = os.path.join(templateDir, "CustomCode.h")
+    customCodeHTemplate = os.path.join(templateDirShared, "CustomCode.h")
     if os.path.exists(customCodeH):
         shutil.copy(customCodeHTemplate, os.path.join(nodeDir, "CustomCode.h_template"))
     else:
