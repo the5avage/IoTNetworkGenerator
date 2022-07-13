@@ -1,6 +1,8 @@
 {
-    "communication-protocol" : "BLE",
-
+    "communication_protocol" : 
+    {
+        "name" : "BLE"
+    },
     "nodes" :
     [
         {
