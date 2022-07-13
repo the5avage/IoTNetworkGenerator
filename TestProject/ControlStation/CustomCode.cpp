@@ -19,7 +19,7 @@ void Loop()
         {
             Serial.print("Innentemperatur: ");
             Serial.print(innenTemp);
-            Serial.print("Aussentemperatur: ");
+            Serial.print(" Aussentemperatur: ");
             Serial.println(aussenTemp);
         }
         else
