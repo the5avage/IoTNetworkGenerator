@@ -24,7 +24,8 @@ void Loop()
         float currentTemp = tempsensor.readTempC();
         if (abs(currentTemp - lastSendedTemp) > 0.1)
         {
-            Serial.print("New outside Temperature is: ");
+            lastSendedTemp = currentTemp;
+            Serial.print("New temperature is: ");
             Serial.println(currentTemp);
             temperature.set(currentTemp);
         }
