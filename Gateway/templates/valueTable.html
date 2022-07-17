@@ -1,0 +1,21 @@
+<table>
+{% for node in config.nodes %}
+    {% if node.variables is defined %}
+    <thead>
+        <th colspan="2">{{node.name}}</th>
+    </thead>
+    <tbody>
+        {% for variable in node.variables %}
+        <tr>
+            <td>
+                <label for="modal_1"class="pseudo button"
+                    hx-get="/modalPlot/{{node.name}}/{{variable.name}}" hx-trigger="click"
+                    hx-target="#modal_1_popup">{{variable.name}}</label>
+            </td>
+            <td>{{ param[node.name + "." + variable.name] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    {% endif %}
+{% endfor %}
+</table>

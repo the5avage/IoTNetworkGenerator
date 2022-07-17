@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{{ param.plot_script|safe }}
+<div class="PlotFullscreen">
+    {{ param.plot_div|indent(4)|safe }}
+</div>
+
+{% endblock content %}

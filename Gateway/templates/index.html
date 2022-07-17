@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="flex center">IoT Dashboard</h1>
+<div class="flex three center" hx-get="/updateValueTable" hx-trigger="every 1s">
+   {% include "valueTable.html" %}
+</div>
+   {% include "emptyModal.html" %}
+{% endblock content %}

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+	<link rel="stylesheet" href="{{ url_for('static', filename= 'css/picnic.min.css') }}" type="text/css">
+	<link rel="stylesheet" href="{{ url_for('static', filename= 'css/plugins.min.css') }}" type="text/css">
+	<link rel="stylesheet" href="{{ url_for('static', filename= 'css/custom.css') }}" type="text/css">
+    <script type="text/javascript" src="{{ url_for('static', filename= 'js/htmx.min.js') }}"></script>
+    {{ param.bokeh.js_resources|indent(4)|safe }}
+    {{ param.bokeh.css_resources|indent(4)|safe  }}
+    <title>IoT Dashboard</title>
+</head>
+<body id="body">
+   <div id="content">
+    {% block content %}
+    {% endblock content %}
+    </div>
+</body>
+</html>
