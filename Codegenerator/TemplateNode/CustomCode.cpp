@@ -28,3 +28,14 @@ void {{node.name}}::onChange_{{v.name}}({{v.type}} value)
         {% endif %}
     {% endfor %}
 {% endfor %}
+
+
+{% for fun in thisNode.get('functions', []) %}
+{% set paramDecl = [] %}
+    {% for p in fun.get('params', []) %}
+        {% do paramDecl.append(p.type + " " + p.name) %}
+    {% endfor %}
+{{fun.returnType}} {{thisNode.name}}::{{fun.name}}({{paramDecl|join(', ')}})
+{
+}
+{% endfor %}

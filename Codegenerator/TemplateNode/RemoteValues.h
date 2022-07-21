@@ -12,6 +12,14 @@ extern RemoteValueReadOnly<{{v.type}}> {{v.name}};
 void onChange_{{v.name}}({{v.type}});
         {% endif %}
     {% endfor %}
+
+    {% for fun in node.get('functions', []) %}
+        {% if fun.returnType is defined %}
+extern RemoteFunction<{{ ([fun.returnType] + fun.get('params', [])|map(attribute='type')|list) |join(',') }}> {{fun.name}};
+        {% else %}
+extern RemoteFunctionVoid<{{ fun.get('params', [])|map(attribute='type')|join(',') }}> {{fun.name}};
+        {% endif %}
+    {% endfor %}
 }
 
 {% endfor %}
@@ -21,4 +29,14 @@ namespace {{thisNode.name}}
 {% for v in thisNode.variables %}
 extern RemoteValue<{{v.type}}> {{v.name}};
 {% endfor %}
+
+
+{% for fun in thisNode.get('functions', []) %}
+{% set paramDecl = [] %}
+    {% for p in fun.get('params', []) %}
+        {% do paramDecl.append(p.type + " " + p.name) %}
+    {% endfor %}
+{{fun.get('returnType', 'void')}} {{fun.name}}({{paramDecl|join(", ")}});
+{% endfor %}
+
 }

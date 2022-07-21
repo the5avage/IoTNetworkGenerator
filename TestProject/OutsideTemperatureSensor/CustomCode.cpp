@@ -46,3 +46,13 @@ void OnDisconnect()
 {
     Serial.println("Disconnected from server");
 }
+
+void OutsideTemperatureSensor::setTolerance(float newValue)
+{
+}
+
+int OutsideTemperatureSensor::getTimeSinceStart()
+{
+    Serial.print("Time since start was called");
+    return millis();
+}

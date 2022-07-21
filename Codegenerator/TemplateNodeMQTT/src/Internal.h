@@ -9,3 +9,4 @@ extern const char *password;
 extern const char *broker_address;
 extern const char *client_name;
 extern int broker_port;
+extern PubSubClient client;

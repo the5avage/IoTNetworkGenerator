@@ -70,10 +70,11 @@ templateFilesSrc = [
     "Util.h", "Util.cpp",
     "Internal.h", "Internal.cpp",
     "RemoteValues.h", "RemoteValues.cpp",
-    "GenCode.h"]
+    "GenCode.h", "optional.hpp"]
 
 templateEnv = jinja2.Environment(
     loader=jinja2.FileSystemLoader([templateDir, templateDirSrc, templateDirShared]),
+    extensions=["jinja2.ext.do"],
     trim_blocks=True, lstrip_blocks=True)
 
 def generateNode(thisNode):

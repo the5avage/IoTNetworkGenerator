@@ -26,6 +26,17 @@ void Loop()
         {
             Serial.println("Error reading temperatures");
         }
+
+        auto res = OutsideTemperatureSensor::getTimeSinceStart();
+        if (res)
+        {
+            Serial.print("OutsideTemperatureSensor timeSinceStart: ");
+            Serial.println(res.value());
+        }
+        else
+        {
+            Serial.println("Error calling function OutsideTemperatureSensor::timeSinceStart");
+        }
     }
     else
     {
