@@ -26,7 +26,6 @@ void Loop()
         {
             Serial.println("Error reading temperatures");
         }
-
         auto res = OutsideTemperatureSensor::getTimeSinceStart();
         if (res)
         {

@@ -53,6 +53,6 @@ void OutsideTemperatureSensor::setTolerance(float newValue)
 
 int OutsideTemperatureSensor::getTimeSinceStart()
 {
-    Serial.print("Time since start was called");
+    Serial.println("Time since start was called");
     return millis();
 }

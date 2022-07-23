@@ -19,6 +19,23 @@
                     "type" : "float",
                     "default" : "0.1"
                 }
+            ],
+            "functions" :
+            [
+                {
+                    "name" : "setTolerance",
+                    "params" :
+                    [
+                        {
+                            "name" : "newValue",
+                            "type" : "float"
+                        }
+                    ]
+                },
+                {
+                    "name" : "getTimeSinceStart",
+                    "returnType" : "int"
+                }
             ]
         },
         {

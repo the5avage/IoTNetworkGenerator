@@ -111,7 +111,8 @@ void loop()
     }
     else
     {
-        delay(500);
+        outputBuffer.sendData();
+        delay(50);
         //Serial.println("connected to server");
     }
 }

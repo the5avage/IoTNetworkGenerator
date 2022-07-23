@@ -6,14 +6,17 @@
 BLEServer *server;
 BLEService *service;
 {% for node in nodes %}
-    {% if node.variables is defined %}
 namespace {{node.name}}
 {
-        {% for v in node.variables %}
+    {% for v in node.get('variables', []) %}
 Characteristic<{{v.type}}> *{{v.name}};
-        {% endfor %}
+    {% endfor %}
+
+    {% for fun in node.get('functions', []) %}
+BLECharacteristic* call_{{fun.name}};
+BLECharacteristic* return_{{fun.name}};
+    {% endfor %}
 }
-    {% endif %}
 {% endfor %}
 
 class ServerCallbacks: public BLEServerCallbacks {
@@ -38,7 +41,7 @@ void setup()
     Serial.println(BLEDevice::getAddress().toString().c_str());
     server = BLEDevice::createServer();
     server->setCallbacks(new ServerCallbacks());
-    service = server->createService("{{service_uuid}}");
+    service = server->createService(BLEUUID("{{service_uuid}}"), 401);
 
     characteristicCallback = new CharacteristicCallback();
 
@@ -55,6 +58,23 @@ void setup()
         {% endif %}
 
     {% endfor %}
+
+    {% for fun in node.functions %}
+        {% set name = node.name ~ '::call_' ~ fun.name %}
+    {{name}} = new BLECharacteristic(
+        "{{fun.call_uuid}}",
+        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY);
+    service->addCharacteristic({{name}});
+    {{name}}->setCallbacks(characteristicCallback);
+
+        {% set name = node.name ~ '::return_' ~ fun.name %}
+    {{name}} = new BLECharacteristic(
+        "{{fun.return_uuid}}",
+        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY);
+    service->addCharacteristic({{name}});
+    {{name}}->setCallbacks(characteristicCallback);
+    {% endfor %}
+
 {% endfor %}
     service->start();
     BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();

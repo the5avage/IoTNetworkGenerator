@@ -18,7 +18,7 @@ void subscribeToTopics(PubSubClient* client)
     {% for fun in node.functions %}
     client->subscribe("{{node.name}}/__return/{{fun.name}}");
     {% endfor %}
- 
+
 {% endfor %}
 
 {% for fun in thisNode.functions %}

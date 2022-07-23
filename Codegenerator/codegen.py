@@ -53,13 +53,18 @@ protocol = config["communication_protocol"]["name"]
 
 templateDir = ""
 if protocol == "BLE":
-    generateBLEServer()
     templateDir = os.path.join(codeGenDir, "TemplateNodeBLE")
     serviceUUID = str(uuid.uuid4())
     config["service_uuid"] = serviceUUID
     for node in config["nodes"]:
         for v in node.get("variables", []):
             v["uuid"] = uuid.uuid4()
+
+        for f in node.get("functions", []):
+            f["call_uuid"] = uuid.uuid4()
+            f["return_uuid"] = uuid.uuid4()
+    generateBLEServer()
+
 elif protocol == "MQTT":
     templateDir = os.path.join(codeGenDir, "TemplateNodeMQTT")
 
