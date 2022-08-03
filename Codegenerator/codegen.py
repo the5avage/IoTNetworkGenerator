@@ -21,6 +21,8 @@ destinationDir = os.getcwd()
 if len(sys.argv) >= 3:
     destinationDir = sys.argv[2]
 
+root_uuid = uuid.UUID("c0353121-d096-45b3-94f8-67094e0eea25")
+
 codeGenDir = os.path.dirname(os.path.realpath(sys.argv[0]))
 serverDir = os.path.join(destinationDir,"Server")
 if os.path.isdir(serverDir):
@@ -54,15 +56,15 @@ protocol = config["communication_protocol"]["name"]
 templateDir = ""
 if protocol == "BLE":
     templateDir = os.path.join(codeGenDir, "TemplateNodeBLE")
-    serviceUUID = str(uuid.uuid4())
+    serviceUUID = str(uuid.uuid5(root_uuid, "service"))
     config["service_uuid"] = serviceUUID
     for node in config["nodes"]:
         for v in node.get("variables", []):
-            v["uuid"] = uuid.uuid4()
+            v["uuid"] = uuid.uuid5(root_uuid, f"{node['name']}::{v['name']}")
 
         for f in node.get("functions", []):
-            f["call_uuid"] = uuid.uuid4()
-            f["return_uuid"] = uuid.uuid4()
+            f["call_uuid"] = uuid.uuid5(root_uuid, f"{node['name']}::{f['name']}::call")
+            f["return_uuid"] = uuid.uuid5(root_uuid, f"{node['name']}::{f['name']}::return")
     generateBLEServer()
 
 elif protocol == "MQTT":
