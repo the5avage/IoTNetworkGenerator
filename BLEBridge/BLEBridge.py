@@ -3,6 +3,7 @@ import bleak
 import uuid
 import sys
 import json
+import paho.mqtt.client as mqtt
 
 root_uuid = uuid.UUID("c0353121-d096-45b3-94f8-67094e0eea25")
 service_uuid = uuid.uuid5(root_uuid, "service")
@@ -35,6 +36,12 @@ for node in config["nodes"]:
         v["mqtt_call_id"] = f"{node['name']}/__call/{f['name']}"
         v["mqtt_return_id"] = f"{node['name']}/__return/{f['name']}"
 
+mqttBroker ="192.168.178.40"
+mqttClient = mqtt.Client("BLEBridge")
+mqttClient.connect(mqttBroker)
+print("mqtt client connected")
+mqttClient.loop_start()
+
 def detection_callback(device, advertisement_data):
     print(device.address, "RSSI:", device.rssi, advertisement_data)
 
@@ -44,6 +51,7 @@ async def notification_handler(sender, data):
     if len(variable) == 1:
         v = variable[0]
         print(f"Notification matches variable {v['nodeName']}::{v['name']}")
+        mqttClient
     else:
         print(f"Notification for unknown characteristic: {sender}")
     print("{0}: {1}".format(sender, data))
