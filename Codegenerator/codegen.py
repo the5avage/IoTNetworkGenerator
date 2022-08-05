@@ -24,9 +24,6 @@ if len(sys.argv) >= 3:
 root_uuid = uuid.UUID("c0353121-d096-45b3-94f8-67094e0eea25")
 
 codeGenDir = os.path.dirname(os.path.realpath(sys.argv[0]))
-serverDir = os.path.join(destinationDir,"Server")
-if os.path.isdir(serverDir):
-    shutil.rmtree(serverDir)
 
 def copyTemplateFile(sourceFilename, destFilpath, templateParam, templateEnv):
     content = templateEnv.get_template(sourceFilename).render(templateParam)
@@ -34,8 +31,12 @@ def copyTemplateFile(sourceFilename, destFilpath, templateParam, templateEnv):
     with open(destFilpath, "w+") as f:
         f.write(content)
 
-def generateBLEServer():
+def generateBLEServer(serverName, serverConfig):
+    serverDir = os.path.join(destinationDir, serverName)
     print("Generate BLE server at: "  + serverDir)
+    if os.path.isdir(serverDir):
+        shutil.rmtree(serverDir)
+
     serverTemplateDir = os.path.join(codeGenDir, "TemplateServerBLE")
     templateEnv = jinja2.Environment(
         loader=jinja2.FileSystemLoader(serverTemplateDir),
@@ -44,33 +45,28 @@ def generateBLEServer():
     os.mkdir(serverDir)
 
     shutil.copyfile(os.path.join(serverTemplateDir,"Characteristic.h"), os.path.join(serverDir, "Characteristic.h"))
-    copyTemplateFile("Server.ino", os.path.join(serverDir, "Server.ino"), config, templateEnv)
+    copyTemplateFile("Server.ino", os.path.join(serverDir, serverName + ".ino"), serverConfig, templateEnv)
     with open(os.path.join(serverDir, ".gitignore"), "w+") as f:
         f.write("*\n")
 
 with open(configFile, "r") as f:
     config = json.load(f)
 
-protocol = config["communication_protocol"]["name"]
+for node in config["nodes"]:
+    for v in node.get("variables", []):
+        v["uuid"] = uuid.uuid5(root_uuid, f"{node['name']}::{v['name']}")
 
-templateDir = ""
-if protocol == "BLE":
-    templateDir = os.path.join(codeGenDir, "TemplateNodeBLE")
-    serviceUUID = str(uuid.uuid5(root_uuid, "service"))
-    config["service_uuid"] = serviceUUID
-    for node in config["nodes"]:
-        for v in node.get("variables", []):
-            v["uuid"] = uuid.uuid5(root_uuid, f"{node['name']}::{v['name']}")
+    for f in node.get("functions", []):
+        f["call_uuid"] = uuid.uuid5(root_uuid, f"{node['name']}::{f['name']}::call")
+        f["return_uuid"] = uuid.uuid5(root_uuid, f"{node['name']}::{f['name']}::return")
 
-        for f in node.get("functions", []):
-            f["call_uuid"] = uuid.uuid5(root_uuid, f"{node['name']}::{f['name']}::call")
-            f["return_uuid"] = uuid.uuid5(root_uuid, f"{node['name']}::{f['name']}::return")
-    generateBLEServer()
+for server in config["ble_servers"]:
+    serviceUUID = str(uuid.uuid5(root_uuid, server["name"]))
+    server["service_uuid"] = serviceUUID
+    serverConfig = copy.deepcopy(config)
+    serverConfig["service_uuid"] = serviceUUID
+    generateBLEServer(server["name"], serverConfig)
 
-elif protocol == "MQTT":
-    templateDir = os.path.join(codeGenDir, "TemplateNodeMQTT")
-
-templateDirSrc = os.path.join(templateDir, "src")
 templateDirShared = os.path.join(codeGenDir, "TemplateNode")
 templateFilesSrc = [
     "RemoteValue.h",
@@ -79,12 +75,7 @@ templateFilesSrc = [
     "RemoteValues.h", "RemoteValues.cpp",
     "GenCode.h", "optional.hpp"]
 
-templateEnv = jinja2.Environment(
-    loader=jinja2.FileSystemLoader([templateDir, templateDirSrc, templateDirShared]),
-    extensions=["jinja2.ext.do"],
-    trim_blocks=True, lstrip_blocks=True)
-
-def generateNode(thisNode):
+def generateNode(thisNode, templateEnv):
     nodeConfig = copy.deepcopy(config)
     otherNodes = list(filter(lambda n: n["name"] in thisNode.get("using", []), nodeConfig["nodes"]))
     for ob in thisNode.get("observe", []):
@@ -108,6 +99,9 @@ def generateNode(thisNode):
 
     nodeConfig['otherNodes'] = otherNodes
     nodeConfig['thisNode'] = thisNode
+    com = thisNode["communication_protocol"]
+    if com["name"] == "BLE":
+        nodeConfig['service_uuid'] = list(filter(lambda x: x["name"] == com["server"], config["ble_servers"]))[0]["service_uuid"]
 
     for template in templateFilesSrc:
         copyTemplateFile(template, os.path.join(nodeDirSrc, template), nodeConfig, templateEnv)
@@ -129,4 +123,19 @@ def generateNode(thisNode):
         f.write(f'/src\n{node["name"]}.ino\n*_template\n')
 
 for node in config["nodes"]:
-    generateNode(node)
+    templateDir = ""
+    protocol = node["communication_protocol"]["name"]
+    if protocol == "BLE":
+        templateDir = os.path.join(codeGenDir, "TemplateNodeBLE")
+    elif protocol == "MQTT":
+        templateDir = os.path.join(codeGenDir, "TemplateNodeMQTT")
+
+    templateDirSrc = os.path.join(templateDir, "src")
+
+    templateEnv = jinja2.Environment(
+        loader=jinja2.FileSystemLoader([templateDir, templateDirSrc, templateDirShared]),
+        extensions=["jinja2.ext.do"],
+        trim_blocks=True, lstrip_blocks=True)
+
+
+    generateNode(node, templateEnv)
