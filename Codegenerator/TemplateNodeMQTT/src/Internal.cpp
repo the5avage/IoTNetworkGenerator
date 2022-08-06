@@ -1,5 +1,6 @@
 #include "Internal.h"
 #include "RemoteValues.h"
+#include "Serialize.h"
 
 bool connectionReady = false;
 const char *ssid = "{{thisNode.communication_protocol.ssid}}";
@@ -48,14 +49,11 @@ void updateValues(char* topic, byte* message, unsigned int length)
     {% for v in node.variables %}
     if (!strcmp(topic, "{{node.name}}/{{v.name}}"))
     {
-        if (length == sizeof({{v.type}}))
-        {
-            {{node.name}}::{{v.name}}.cachedValue = *({{v.type}}*)message;
-            {{node.name}}::{{v.name}}.hasValue = true;
+        {{node.name}}::{{v.name}}.cachedValue = std::get<0>(deserialize<{{v.type}}>(message));
+        {{node.name}}::{{v.name}}.hasValue = true;
         {% if v.isObserved is defined %}
-            {{node.name}}::onChange_{{v.name}}({{node.name}}::{{v.name}}.cachedValue);
+        {{node.name}}::onChange_{{v.name}}({{node.name}}::{{v.name}}.cachedValue);
         {% endif %}
-        }
         return;
     }
     {% endfor %}
@@ -67,7 +65,7 @@ void updateValues(char* topic, byte* message, unsigned int length)
     if (!strcmp(topic, "{{node.name}}/__return/{{fun.name}}"))
     {
         {% if fun.returnType is defined %}
-        {{node.name}}::{{fun.name}}.result = *({{fun.returnType}}*)message;
+        {{node.name}}::{{fun.name}}.result = std::get<0>(deserialize<{{fun.returnType}}>(message));
         {% else %}
         {{node.name}}::{{fun.name}}.result = true;
         {% endif %}
@@ -85,7 +83,8 @@ void updateValues(char* topic, byte* message, unsigned int length)
     {% endfor %}
     {% if fun.returnType is defined %}
         auto result = {{thisNode.name}}::{{fun.name}}({{fun.get('params', [])|map(attribute='name')|join(',')}});
-        client.publish("{{thisNode.name}}/__return/{{fun.name}}", (const uint8_t*)&result, sizeof(result));
+        std::vector<uint8_t> data = toBytes(result);
+        client.publish("{{thisNode.name}}/__return/{{fun.name}}", data.data(), data.size());
     {% else %}
         {{thisNode.name}}::{{fun.name}}({{fun.get('params', [])|map(attribute='name')|join(',')}});
         client.publish("{{thisNode.name}}/__return/{{fun.name}}", "");

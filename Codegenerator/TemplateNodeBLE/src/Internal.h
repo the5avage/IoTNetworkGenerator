@@ -48,7 +48,7 @@ void notifyReturnCallback(BLERemoteCharacteristic* remoteCharacteristic, uint8_t
 {
     if (length == sizeof(T))
     {
-        remoteFunction->receiveResult(*(T*)data);
+        remoteFunction->receiveResult(deserialize<T>(data));
     }
 }
 

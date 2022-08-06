@@ -73,7 +73,7 @@ templateFilesSrc = [
     "Util.h", "Util.cpp",
     "Internal.h", "Internal.cpp",
     "RemoteValues.h", "RemoteValues.cpp",
-    "GenCode.h", "optional.hpp"]
+    "GenCode.h", "optional.hpp", "Serialize.h"]
 
 def generateNode(thisNode, templateEnv):
     nodeConfig = copy.deepcopy(config)
