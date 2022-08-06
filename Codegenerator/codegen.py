@@ -60,7 +60,7 @@ for node in config["nodes"]:
         f["call_uuid"] = uuid.uuid5(root_uuid, f"{node['name']}::{f['name']}::call")
         f["return_uuid"] = uuid.uuid5(root_uuid, f"{node['name']}::{f['name']}::return")
 
-for server in config["ble_servers"]:
+for server in config.get("ble_servers", []):
     serviceUUID = str(uuid.uuid5(root_uuid, server["name"]))
     server["service_uuid"] = serviceUUID
     serverConfig = copy.deepcopy(config)

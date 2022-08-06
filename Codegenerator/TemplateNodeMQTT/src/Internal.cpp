@@ -2,11 +2,11 @@
 #include "RemoteValues.h"
 
 bool connectionReady = false;
-const char *ssid = "{{communication_protocol.ssid}}";
-const char *password = "{{communication_protocol.password}}";
-const char *broker_address = "{{communication_protocol.broker_address}}";
+const char *ssid = "{{thisNode.communication_protocol.ssid}}";
+const char *password = "{{thisNode.communication_protocol.password}}";
+const char *broker_address = "{{mqtt_broker.broker_address}}";
 const char *client_name = "{{thisNode.name}}";
-int broker_port = {{communication_protocol.broker_port}};
+int broker_port = {{mqtt_broker.broker_port}};
 
 void subscribeToTopics(PubSubClient* client)
 {

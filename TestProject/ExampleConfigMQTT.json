@@ -1,16 +1,19 @@
 {
-    "communication_protocol" :
+    "mqtt_broker" :
     {
-        "name" : "MQTT",
-        "ssid" : "XXXX",
-        "password" : "XXXX",
-        "broker_address" : "XXXX",
-        "broker_port" :"XXXX"
+        "broker_address" : "192.168.XXX.XXX",
+        "broker_port" :"1883"
     },
     "nodes" :
     [
         {
             "name" : "OutsideTemperatureSensor",
+            "communication_protocol" :
+            {
+                "name" : "MQTT",
+                "ssid" : "XXX",
+                "password" : "XXX"
+            },
             "variables" :
             [
                 {
@@ -44,6 +47,12 @@
         },
         {
             "name" : "InsideTemperatureSensor",
+            "communication_protocol" :
+            {
+                "name" : "MQTT",
+                "ssid" : "XXX",
+                "password" : "XXX"
+            },
             "variables" :
             [
                 {
@@ -60,6 +69,12 @@
         },
         {
             "name" : "ControlStation",
+            "communication_protocol" :
+            {
+                "name" : "MQTT",
+                "ssid" : "XXX",
+                "password" : "XXX"
+            },
             "using" : [
                 "OutsideTemperatureSensor",
                 "InsideTemperatureSensor"

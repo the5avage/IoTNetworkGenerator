@@ -17,7 +17,7 @@
     [
         {
             "name" : "OutsideTemperatureSensor",
-            "communication_protocol" : 
+            "communication_protocol" :
             {
                 "name" : "BLE",
                 "server" : "BLEServerOutside"

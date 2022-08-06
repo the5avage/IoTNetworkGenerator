@@ -1,12 +1,24 @@
 {
-    "communication_protocol" : 
+    "mqtt_broker" :
     {
-        "name" : "BLE"
+        "broker_address" : "192.168.178.40",
+        "broker_port" :"1883"
     },
+    "ble_servers" :
+    [
+        {
+            "name": "Server"
+        }
+    ],
     "nodes" :
     [
         {
             "name" : "OutsideTemperatureSensor",
+            "communication_protocol" :
+            {
+                "name" : "BLE",
+                "server" : "Server"
+            },
             "variables" :
             [
                 {
@@ -40,6 +52,11 @@
         },
         {
             "name" : "InsideTemperatureSensor",
+            "communication_protocol" :
+            {
+                "name" : "BLE",
+                "server" : "Server"
+            },
             "variables" :
             [
                 {
@@ -56,6 +73,11 @@
         },
         {
             "name" : "ControlStation",
+            "communication_protocol" :
+            {
+                "name" : "BLE",
+                "server" : "Server"
+            },
             "using" : [
                 "OutsideTemperatureSensor",
                 "InsideTemperatureSensor"
