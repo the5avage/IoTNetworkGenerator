@@ -118,8 +118,8 @@ struct gens<0, S...> {
   typedef seq<S...> type;
 };
 
-template<typename FN, typename P, int ...S>
-double call_fn_internal(const FN& fn, const P& params, const seq<S...>)
+template<typename Ret, typename FN, typename P, int ...S>
+Ret call_fn_internal(const FN& fn, const P& params, const seq<S...>)
 {
    return fn(std::get<S>(params) ...);
 }
@@ -128,12 +128,31 @@ template<typename Ret, typename ...Args>
 Ret call_fn(const std::function<Ret(Args...)>& fn, 
             const std::tuple<Args...>& params)
 {
-    return call_fn_internal(fn, params, typename gens<sizeof...(Args)>::type());
+    return call_fn_internal<Ret>(fn, params, typename gens<sizeof...(Args)>::type());
 }
 
 template<typename Ret, typename ...Args>
 Ret call_fn(Ret(* fn)(Args...), const std::tuple<Args...>& params)
 {
-    return call_fn_internal(fn, params, typename gens<sizeof...(Args)>::type());
+    return call_fn_internal<Ret>(fn, params, typename gens<sizeof...(Args)>::type());
+}
+
+template<typename FN, typename P, int ...S>
+void call_fn_internal_void(const FN& fn, const P& params, const seq<S...>)
+{
+   return fn(std::get<S>(params) ...);
+}
+
+template<typename ...Args>
+void call_fn_void(const std::function<void(Args...)>& fn, 
+            const std::tuple<Args...>& params)
+{
+    return call_fn_internal_void(fn, params, typename gens<sizeof...(Args)>::type());
+}
+
+template<typename ...Args>
+void call_fn_void(void(* fn)(Args...), const std::tuple<Args...>& params)
+{
+    return call_fn_internal_void(fn, params, typename gens<sizeof...(Args)>::type());
 }
 

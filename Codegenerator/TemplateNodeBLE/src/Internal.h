@@ -37,19 +37,13 @@ extern OutputBuffer outputBuffer;
 template<typename T, void (*Fun)(T)>
 void notifyCallback(BLERemoteCharacteristic* remoteCharacteristic, uint8_t* data, size_t length, bool isNotify)
 {
-    if (length == sizeof(T))
-    {
-        Fun(*(T*)data);
-    }
+    Fun(std::get<0>(deserialize<T>(data)));
 }
 
 template<typename T, typename Fun, Fun* remoteFunction>
 void notifyReturnCallback(BLERemoteCharacteristic* remoteCharacteristic, uint8_t* data, size_t length, bool isNotify)
 {
-    if (length == sizeof(T))
-    {
-        remoteFunction->receiveResult(deserialize<T>(data));
-    }
+    remoteFunction->receiveResult(std::get<0>(deserialize<T>(data)));
 }
 
 template<typename Fun, Fun* remoteFunction>
