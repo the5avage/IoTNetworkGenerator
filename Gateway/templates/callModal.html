@@ -1,0 +1,11 @@
+<div class="modal CallModal" id="modal_1_popup">
+  <input id="modal_1" type="checkbox" checked/>
+  <label for="modal_1" class="overlay"
+    hx-get="/closeModal" hx-trigger="click" hx-target="#modal_1_popup" hx-swap="outerHTML"></label>
+  <div class="flex one grow CallModal">
+      <h3>{{fun.declaration}}</h3>
+      <div>
+          {% include "callForm.html" %}
+      </div>
+  </div>
+</div>

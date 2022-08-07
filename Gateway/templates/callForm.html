@@ -1,0 +1,17 @@
+<form hx-put="/testCallForm" hx-target="#returnValue" hx-swap="innerHTML">
+  <div>
+    <label>First Name</label>
+    <input type="text" name="firstName" value="Joe">
+  </div>
+  <div>
+    <label>Last Name</label>
+    <input type="text" name="lastName" value="Blow">
+  </div>
+  <div>
+    <label>Email Address</label>
+    <input type="email" name="email" value="joe@blow.com">
+  </div>
+  <button class="btn">Submit</button>
+  <div id="returnValue">
+  </div>
+</form>

@@ -1,3 +1,4 @@
+from urllib import request
 import flask
 import paho.mqtt.client as mqtt
 import sqlite3
@@ -67,6 +68,14 @@ for node in config["nodes"]:
     for variable in node.get("variables", []):
         fullName = f"{node['name']}.{variable['name']}"
         param[fullName] = "n/a"
+    
+    for fun in node.get("functions", []):
+        argumentTypes = list(map(lambda x: x["type"], fun.get("params", [])))
+        argumentNames = list(map(lambda x: x["name"], fun.get("params", [])))
+        arguments = map(lambda x: x[0] + " " + x[1], zip(argumentTypes, argumentNames))
+        declaration = fun.get("returnType", "void") + " " + fun["name"] + "("
+        declaration +=  ", ".join(arguments) + ")"
+        fun["declaration"] = declaration
 
 def insertValue(tablename, value):
     with lock:
@@ -143,6 +152,34 @@ def modalPlot(node, variable):
     param["plot_div"] = div
     param["plot_target"] = f"{node}/{variable}"
     result = flask.render_template("plotModal.html", param=param, config=config)
+    return result
+
+@app.route("/modalFunctionForm/<nodeName>/<funName>")
+def modalFunctionForm(nodeName, funName):
+    node = next(x for x in config["nodes"] if x["name"] == nodeName)
+    fun = next(x for x in node["functions"] if x["name"] == funName)
+    result = flask.render_template("callModal.html", param=param, config=config, node=node, fun=fun)
+    return result
+
+@app.route("/testForm", methods=['POST'])
+def testForm():
+    print("Test form")
+    print(flask.request.data)
+    print(flask.request.form)
+    print(flask.request.form['say'])
+    print(flask.request.form['to'])
+    print("Test form end")
+    result = flask.render_template("index.html", param=param, config=config)
+    return result
+
+@app.route("/testCallForm", methods=['PUT'])
+def testCallForm():
+    print("Test call form")
+    print(flask.request.form)
+    print(flask.request.form['firstName'])
+    print(flask.request.form['lastName'])
+    print(flask.request.form['email'])
+    result = flask.render_template("lds_spinner.html", param=param, config=config)
     return result
 
 if __name__ == "__main__":

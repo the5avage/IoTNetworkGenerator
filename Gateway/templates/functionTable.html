@@ -1,20 +1,19 @@
 <div class="flex one">
-    <h2 class = "flex center">Variable Monitor</h2>
+    <h2 class="flex center">Functions</h2>
     <table>
     {% for node in config.nodes %}
-        {% if node.variables is defined %}
+        {% if node.functions is defined %}
         <thead>
             <th colspan="2">{{node.name}}</th>
         </thead>
         <tbody>
-            {% for variable in node.variables %}
+            {% for fun in node.functions %}
             <tr>
                 <td>
                     <label for="modal_1"class="flex grow pseudo button"
-                        hx-get="/modalPlot/{{node.name}}/{{variable.name}}" hx-trigger="click"
-                        hx-target="#modal_1_popup">{{variable.name}}</label>
+                        hx-get="/modalFunctionForm/{{node.name}}/{{fun.name}}" hx-trigger="click"
+                        hx-target="#modal_1_popup">{{fun.declaration}}</label>
                 </td>
-                <td>{{ param[node.name + "." + variable.name] }}</td>
             </tr>
             {% endfor %}
         </tbody>
