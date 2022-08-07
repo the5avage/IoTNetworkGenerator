@@ -78,8 +78,7 @@ void updateValues(char* topic, byte* message, unsigned int length)
     if (!strcmp(topic, "{{thisNode.name}}/__call/{{fun.name}}"))
     {
     {% for param in fun.get("params", []) %}
-        {{param.type}} {{param.name}} = *({{param.type}}*)message;
-        message += sizeof({{param.type}});
+        {{param.type}} {{param.name}} = deserialize(message, static_cast<{{param.type}}*>(0));
     {% endfor %}
     {% if fun.returnType is defined %}
         auto result = {{thisNode.name}}::{{fun.name}}({{fun.get('params', [])|map(attribute='name')|join(',')}});
