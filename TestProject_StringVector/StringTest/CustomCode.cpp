@@ -32,6 +32,7 @@ void Loop()
         {
             Serial.println("Error calling function");
         }
+        testString.set("Hello cruel world");
     }
     else
     {

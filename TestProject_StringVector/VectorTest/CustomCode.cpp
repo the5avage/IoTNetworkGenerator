@@ -28,6 +28,8 @@ void Loop()
     {
         Serial.println("No connection to server");
     }
+    std::vector<int> primes = {2, 3, 5, 7};
+    testVector.set(primes);
     delay(1000);
 }
 

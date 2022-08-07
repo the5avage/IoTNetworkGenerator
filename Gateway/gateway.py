@@ -1,12 +1,12 @@
 import flask
 import paho.mqtt.client as mqtt
-import struct
 import sqlite3
 import dateplot
 from datetime import datetime
 import threading
 import sys
 import json
+import serialize
 
 def usage():
     print( sys.argv[0])
@@ -30,12 +30,37 @@ for node in config["nodes"]:
     if "variables" in node:
         cur.execute(f"ATTACH DATABASE '{node['name']}.db' as '{node['name']}'")
         for variable in node["variables"]:
-            cur.execute(f"""
-                CREATE TABLE IF NOT EXISTS
-                    {node['name']}.{variable['name']}(
-                    value REAL NOT NULL,
-                    timestamp INTEGER NOT NULL);"""
-            )
+            type = ' '.join(variable["type"].split()) # collapses multiple whitespaces to one
+            if type == "float" or type == "double":
+                cur.execute(f"""
+                    CREATE TABLE IF NOT EXISTS
+                        {node['name']}.{variable['name']}(
+                        value REAL NOT NULL,
+                        timestamp INTEGER NOT NULL);"""
+                )
+            elif serialize.isIntegerType(type):
+                cur.execute(f"""
+                    CREATE TABLE IF NOT EXISTS
+                        {node['name']}.{variable['name']}(
+                        value INTEGER NOT NULL,
+                        timestamp INTEGER NOT NULL);"""
+                )
+            elif type == "std::string":
+                cur.execute(f"""
+                    CREATE TABLE IF NOT EXISTS
+                        {node['name']}.{variable['name']}(
+                        value TEXT NOT NULL,
+                        timestamp INTEGER NOT NULL);"""
+                )
+            elif type.startswith("std::vector"):
+                cur.execute(f"""
+                    CREATE TABLE IF NOT EXISTS
+                        {node['name']}.{variable['name']}(
+                        value BLOB NOT NULL,
+                        timestamp INTEGER NOT NULL);"""
+                )
+            else:
+                raise Exception(f"Unknown type: {type}")
 
 param = {"bokeh" : dateplot.getStaticResources()}
 for node in config["nodes"]:
@@ -58,16 +83,19 @@ def getTimeSeries(tablename):
 
 mqttBroker ="192.168.178.40"
 def on_message(client, userdata, message):
-    #print("received topic:" + message.topic)
+    print("received topic:" + message.topic)
     nodeName, variableName = message.topic.split("/")
     for node in config["nodes"]:
         if nodeName == node["name"]:
             for variable in node.get("variables", []):
                 if variableName == variable["name"]:
-                    value = struct.unpack("f", message.payload)[0]
+                    value = serialize.deserialize(message.payload, variable["type"])
                     fullName = f"{nodeName}.{variableName}"
-                    insertValue(fullName, value)
-                    param[fullName] = value
+                    if variable["type"].startswith("std::vector"):
+                        insertValue(fullName, message.payload)
+                    else:
+                        insertValue(fullName, value)
+                    param[fullName] = str(value)
 
 client = mqtt.Client("Gateway")
 client.connect(mqttBroker)
@@ -75,7 +103,8 @@ print("client connected")
 client.loop_start()
 
 for node in config["nodes"]:
-    client.subscribe(f"{node['name']}/#")
+    for variable in node["variables"]:
+        client.subscribe(f"{node['name']}/{variable['name']}")
 
 client.on_message=on_message
 app = flask.Flask(__name__)
