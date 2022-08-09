@@ -70,6 +70,7 @@ for server in config.get("ble_servers", []):
 
 templateDirShared = os.path.join(codeGenDir, "TemplateNode")
 templateFilesSrc = [
+    "RemoteFunctionAbstract.h",
     "RemoteValue.h",
     "Util.h", "Util.cpp",
     "Internal.h", "Internal.cpp",
