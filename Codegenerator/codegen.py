@@ -53,6 +53,7 @@ with open(configFile, "r") as f:
     config = json.load(f)
 
 for node in config["nodes"]:
+    node["uuid"] = uuid.uuid5(root_uuid, node['name'])
     for v in node.get("variables", []):
         v["uuid"] = uuid.uuid5(root_uuid, f"{node['name']}::{v['name']}")
 

@@ -5,6 +5,7 @@
 #include <functional>
 #include <type_traits>
 #include <string>
+#include "optional.hpp"
 
 template <typename T>
 std::vector<uint8_t> toBytes(T data)
@@ -97,7 +98,7 @@ template <typename... Args>
 std::tuple<Args...> deserialize(std::vector<uint8_t> vec)
 {
     uint8_t* data = vec.data();
-    return deserialize<Args...>(data);
+    return std::tuple<Args...>{ deserialize(data, static_cast<Args*>(0))... };
 }
 
 template <typename... Args>
@@ -156,3 +157,30 @@ void call_fn_void(void(* fn)(Args...), const std::tuple<Args...>& params)
     return call_fn_internal_void(fn, params, typename gens<sizeof...(Args)>::type());
 }
 
+inline std::vector<uint8_t> serializeFunctionCall(std::vector<uint8_t>& node_uuid, std::vector<uint8_t>& payload)
+{
+    assert(node_uuid.size() == 16); // Static value provided buy Codegenerator can only be wrong due to programming error
+    std::vector<uint8_t> result(node_uuid.begin(), node_uuid.end());
+    result.insert(result.end(), payload.begin(), payload.end());
+    return result;
+}
+
+inline nonstd::optional< std::vector<uint8_t> > deserializeFunctionCall(std::vector<uint8_t>& node_uuid, std::vector<uint8_t>& data)
+{
+    assert(node_uuid.size() == 16); // Static value provided buy Codegenerator can only be wrong due to programming error
+    if (data.size() < 16)
+    {
+        return nonstd::nullopt;
+    }
+
+    for (int i = 0; i < 16; i++)
+    {
+        if (node_uuid[i] != data[i])
+        {
+            return nonstd::nullopt;
+        }
+    }
+
+    std::vector<uint8_t>result(data.begin() + 16, data.end());
+    return result;
+}

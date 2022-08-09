@@ -48,15 +48,28 @@ public:
 template <typename R, typename... Args>
 class RemoteFunction
 {
+    SemaphoreHandle_t semaphore = xSemaphoreCreateBinary();
 public:
     PubSubClient* client;
     const char* topic;
-    SemaphoreHandle_t semaphore = xSemaphoreCreateBinary();
     nonstd::optional<R> result = nonstd::nullopt;
+    std::vector<uint8_t> node_uuid;
+
+    void pickUpResult(std::vector<uint8_t>& data)
+    {
+        auto payload = deserializeFunctionCall(node_uuid, data);
+        if (payload)
+        {
+            result = std::get<0>(deserialize<R>(payload.value()));
+            xSemaphoreGive(semaphore);
+        }
+    }
+
     nonstd::optional<R> operator()(Args... args)
     {
         result = nonstd::nullopt;
-        std::vector<uint8_t> data = toBytes(args...);
+        std::vector<uint8_t> argData = toBytes(args...);
+        std::vector<uint8_t> data = serializeFunctionCall(node_uuid, argData);
         client->publish(topic, data.data(), data.size());
         xSemaphoreTake(semaphore, (TickType_t) 10);
 
@@ -67,18 +80,30 @@ public:
         return result;
     }
     RemoteFunction() = default;
-    RemoteFunction(PubSubClient* client, const char* topic) :
-        client(client), topic(topic) {}
+    RemoteFunction(PubSubClient* client, const char* topic, std::vector<uint8_t>& node_uuid) :
+        client(client), topic(topic), node_uuid(node_uuid) {}
 };
 
 template <typename... Args>
 class RemoteFunctionVoid
 {
+    SemaphoreHandle_t semaphore = xSemaphoreCreateBinary();
 public:
     PubSubClient* client;
     const char* topic;
-    SemaphoreHandle_t semaphore = xSemaphoreCreateBinary();
     bool result = false;
+    std::vector<uint8_t> node_uuid;
+
+    void pickUpResult(std::vector<uint8_t>& data)
+    {
+        auto payload = deserializeFunctionCall(node_uuid, data);
+        if (payload)
+        {
+            result = true;
+            xSemaphoreGive(semaphore);
+        }
+    }
+
     bool operator()(Args... args)
     {
         result = false;
@@ -93,6 +118,6 @@ public:
         return result;
     }
     RemoteFunctionVoid() = default;
-    RemoteFunctionVoid(PubSubClient* client, const char* topic) :
-        client(client), topic(topic) {}
+    RemoteFunctionVoid(PubSubClient* client, const char* topic, std::vector<uint8_t>& node_uuid) :
+        client(client), topic(topic), node_uuid(node_uuid) {}
 };
