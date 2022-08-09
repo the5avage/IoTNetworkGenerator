@@ -1,7 +1,7 @@
 {
     "mqtt_broker" :
     {
-        "broker_address" : "192.168.XXX.XXX",
+        "broker_address" : "192.168.178.40",
         "broker_port" :"1883"
     },
     "nodes" :
@@ -11,8 +11,8 @@
             "communication_protocol" :
             {
                 "name" : "MQTT",
-                "ssid" : "XXX",
-                "password" : "XXX"
+                "ssid" : "FRITZ!Box 7430 KX",
+                "password" : "92648877368773613105"
             },
             "variables" :
             [
@@ -50,8 +50,8 @@
             "communication_protocol" :
             {
                 "name" : "MQTT",
-                "ssid" : "XXX",
-                "password" : "XXX"
+                "ssid" : "FRITZ!Box 7430 KX",
+                "password" : "92648877368773613105"
             },
             "variables" :
             [
@@ -72,8 +72,8 @@
             "communication_protocol" :
             {
                 "name" : "MQTT",
-                "ssid" : "XXX",
-                "password" : "XXX"
+                "ssid" : "FRITZ!Box 7430 KX",
+                "password" : "92648877368773613105"
             },
             "using" : [
                 "OutsideTemperatureSensor",

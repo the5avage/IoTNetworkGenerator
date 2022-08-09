@@ -1,17 +1,11 @@
-<form hx-put="/testCallForm" hx-target="#returnValue" hx-swap="innerHTML">
+<form hx-put="/callFunction/{{node.name}}/{{fun.name}}" hx-target="#returnValue" hx-swap="innerHTML">
+{% for param in fun.params %}
   <div>
-    <label>First Name</label>
-    <input type="text" name="firstName" value="Joe">
+    <label>{{param.type}} {{param.name}}</label>
+    <input type="text" name="{{param.name}}">
   </div>
-  <div>
-    <label>Last Name</label>
-    <input type="text" name="lastName" value="Blow">
-  </div>
-  <div>
-    <label>Email Address</label>
-    <input type="email" name="email" value="joe@blow.com">
-  </div>
-  <button class="btn">Submit</button>
+{% endfor %}
+  <button class="btn">Call Function</button>
   <div id="returnValue">
   </div>
 </form>

@@ -1,3 +1,4 @@
+from shutil import ExecError
 from urllib import request
 import flask
 import paho.mqtt.client as mqtt
@@ -161,26 +162,22 @@ def modalFunctionForm(nodeName, funName):
     result = flask.render_template("callModal.html", param=param, config=config, node=node, fun=fun)
     return result
 
-@app.route("/testForm", methods=['POST'])
-def testForm():
-    print("Test form")
-    print(flask.request.data)
-    print(flask.request.form)
-    print(flask.request.form['say'])
-    print(flask.request.form['to'])
-    print("Test form end")
-    result = flask.render_template("index.html", param=param, config=config)
-    return result
+@app.route("/callFunction/<nodeName>/<funName>", methods=['PUT'])
+def testCallForm(nodeName, funName):
+    print("Call function")
+    node = next(x for x in config["nodes"] if x["name"] == nodeName)
+    fun = next(x for x in node["functions"] if x["name"] == funName)
+    #print(flask.request.form)
+    try:
+        for p in fun.get("params", []):
+            #print(f"Received param {p['name']}: {flask.request.form[p['name']]}")
+            funParam = serialize.fromString(flask.request.form[p['name']], p["type"])
+            print(f"Converted param: {funParam}")
 
-@app.route("/testCallForm", methods=['PUT'])
-def testCallForm():
-    print("Test call form")
-    print(flask.request.form)
-    print(flask.request.form['firstName'])
-    print(flask.request.form['lastName'])
-    print(flask.request.form['email'])
-    result = flask.render_template("lds_spinner.html", param=param, config=config)
-    return result
+        result = flask.render_template("lds_spinner.html", param=param, config=config)
+        return result
+    except Exception as e:
+        return f"<div>Error: {str(e)}</div>"
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0')

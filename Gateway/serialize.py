@@ -46,3 +46,37 @@ def deserialize(bytes, typename):
         return struct.unpack(str(num)+fmt, bytes[4:])
     else:
         raise Exception(f"Unknown type {typename}")
+
+def serialize(value, typename):
+    fmt = typeFmt.get(typename, None)
+    if fmt is not None:
+        return struct.pack(fmt, value)
+    elif typename == "std::string":
+        s = bytes(value, "utf-8")
+        return struct.pack("I", len(s)) + s
+    elif typename.startswith("std::vector"):
+        innerType = typename[typename.find("<")+1:typename.find(">")]
+        fmt = typeFmt.get(innerType, None)
+        if fmt is None:
+            raise Exception(f"Unknown type {innerType}")
+        return struct.pack(f"I{len(value)}{fmt}", len(value), value)
+    else:
+        raise Exception(f"Unknown type {typename}")
+
+def fromString(s, typename):
+    if isIntegerType(typename):
+        return int(s)
+    elif typename == "float" or typename == "double":
+        return float(s)
+    elif typename == "std::string":
+        return s
+    elif typename.startswith("std::vector"):
+        innerType = typename[typename.find("<")+1:typename.find(">")]
+        s = s.replace(" ", "")
+        s = s.split(",")
+        result = []
+        for e in s:
+            result.append(fromString(e, innerType))
+        return result
+    else:
+        raise Exception(f"Unknown type {typename}")

@@ -11,8 +11,8 @@
             "communication_protocol" :
             {
                 "name" : "MQTT",
-                "ssid" : "XXX",
-                "password" : "XXX"
+                "ssid" : "FRITZ!Box 7430 KX",
+                "password" : "92648877368773613105"
             },
             "variables" :
             [
@@ -44,8 +44,8 @@
             "communication_protocol" :
             {
                 "name" : "MQTT",
-                "ssid" : "XXX",
-                "password" : "XXX"
+                "ssid" : "FRITZ!Box 7430 KX",
+                "password" : "92648877368773613105"
             },
             "variables" :
             [
