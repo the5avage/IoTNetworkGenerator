@@ -6,6 +6,7 @@
 #include <freertos/semphr.h>
 #include <functional>
 #include "Serialize.h"
+#include "RemoteFunctionAbstract.h"
 
 template<typename T>
 class RemoteValueReadOnly
@@ -20,7 +21,7 @@ public:
         {
             return false;
         }
-        value = deserialize<T>((uint8_t*)rawValue.data());
+        value = std::get<0>(deserialize<T>((uint8_t*)rawValue.data()));
         return true;
     }
 
@@ -46,61 +47,28 @@ public:
 };
 
 template <typename R, typename... Args>
-class RemoteFunction
+class RemoteFunction : public RemoteFunctionAbstract<R, Args...>
 {
 public:
     BLERemoteCharacteristic* characteristic = nullptr;
-    SemaphoreHandle_t semaphore = xSemaphoreCreateBinary();
-    nonstd::optional<R> result = nonstd::nullopt;
 
-    nonstd::optional<R> operator()(Args... args)
+    virtual void sendData(std::vector<uint8_t>& data)
     {
-        result = nonstd::nullopt;
-        std::vector<uint8_t> data = toBytes(args...);
         characteristic->writeValue(data.data(), data.size());
-        xSemaphoreTake(semaphore, (TickType_t) 10);
-
-        if (xSemaphoreTake(semaphore, (TickType_t) portTICK_PERIOD_MS * 5000) != pdTRUE)
-        {
-            return nonstd::nullopt;
-        }
-        return result;
-    }
-
-    void receiveResult(R value)
-    {
-        result = value;
-        xSemaphoreGive(semaphore);
     }
 
     RemoteFunction() = default;
 };
 
 template <typename... Args>
-class RemoteFunctionVoid
+class RemoteFunctionVoid : public RemoteFunctionVoidAbstract<Args...>
 {
 public:
     BLERemoteCharacteristic* characteristic = nullptr;
-    SemaphoreHandle_t semaphore = xSemaphoreCreateBinary();
-    bool result = false;
 
-    bool operator()(Args... args)
+    virtual void sendData(std::vector<uint8_t>& data)
     {
-        result = false;
-        std::vector<uint8_t> data = toBytes(args...);
         characteristic->writeValue(data.data(), data.size());
-        xSemaphoreTake(semaphore, (TickType_t) 10);
-
-        if (xSemaphoreTake(semaphore, (TickType_t) portTICK_PERIOD_MS * 5000) != pdTRUE)
-        {
-            false;
-        }
-        return result;
-    }
-
-    void receiveResult()
-    {
-        xSemaphoreGive(semaphore);
     }
 
     RemoteFunctionVoid() = default;

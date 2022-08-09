@@ -40,31 +40,33 @@ void notifyCallback(BLERemoteCharacteristic* remoteCharacteristic, uint8_t* data
     Fun(std::get<0>(deserialize<T>(data)));
 }
 
-template<typename T, typename Fun, Fun* remoteFunction>
+template<typename Fun, Fun* remoteFunction>
 void notifyReturnCallback(BLERemoteCharacteristic* remoteCharacteristic, uint8_t* data, size_t length, bool isNotify)
 {
-    remoteFunction->receiveResult(std::get<0>(deserialize<T>(data)));
-}
-
-template<typename Fun, Fun* remoteFunction>
-void notifyReturnVoidCallback(BLERemoteCharacteristic* remoteCharacteristic, uint8_t* data, size_t length, bool isNotify)
-{
-    remoteFunction->receiveResult();
+    std::vector<uint8_t> vec (data, data + length);
+    remoteFunction->pickUpResult(vec);
 }
 
 template<BLERemoteCharacteristic** returnCharacteristic, typename Fun, Fun* localFunction, typename... Args>
 void notifyCallCallback(BLERemoteCharacteristic* remoteCharacteristic, uint8_t* data, size_t length, bool isNotify)
 {
-    auto params = deserialize<Args...>(data);
-    auto result = toBytes(call_fn(localFunction, params));
-    outputBuffer.addData(*returnCharacteristic, result);
+    std::vector<uint8_t> rawData(data, data + length);
+    auto result = processFunctionCall<Fun*, Args...>(rawData, localFunction);
+    if (!result)
+    {
+        return;
+    }
+    outputBuffer.addData(*returnCharacteristic, result.value());
 }
 
 template<BLERemoteCharacteristic** returnCharacteristic, typename Fun, Fun* localFunction, typename... Args>
 void notifyCallVoidCallback(BLERemoteCharacteristic* remoteCharacteristic, uint8_t* data, size_t length, bool isNotify)
 {
-    auto params = deserialize<Args...>(data);
-    call_fn_void<Args...>(localFunction, params);
-    std::vector<uint8_t> result;
-    outputBuffer.addData(*returnCharacteristic, result);
+    std::vector<uint8_t> rawData(data, data + length);
+    auto result = processFunctionCallVoid<Fun*, Args...>(rawData, localFunction);
+    if (!result)
+    {
+        return;
+    }
+    outputBuffer.addData(*returnCharacteristic, result.value());
 }

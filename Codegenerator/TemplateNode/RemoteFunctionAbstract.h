@@ -76,3 +76,34 @@ public:
     }
     RemoteFunctionVoidAbstract() = default;
 };
+
+template <typename Fun, typename... Args>
+nonstd::optional<std::vector<uint8_t>> processFunctionCall(std::vector<uint8_t>& data, Fun fun)
+{
+    if (data.size() < 16)
+    {
+        return nonstd::nullopt; //Invalid Data, need at least 16 byte uuid of the calling node
+    }
+    std::vector<uint8_t> calleeUUID(data.begin(), data.begin() + 16);
+    std::vector<uint8_t> paramData(data.begin() + 16, data.end());
+    auto params = deserialize<Args...>(paramData);
+    auto resultData = toBytes(call_fn(fun, params));
+    auto result = serializeFunctionCall(calleeUUID, resultData);
+    return result;
+}
+
+template <typename Fun, typename... Args>
+nonstd::optional<std::vector<uint8_t>> processFunctionCallVoid(std::vector<uint8_t>& data, Fun fun)
+{
+    if (data.size() < 16)
+    {
+        return nonstd::nullopt; //Invalid Data, need at least 16 byte uuid of the calling node
+    }
+    std::vector<uint8_t> calleeUUID(data.begin(), data.begin() + 16);
+    std::vector<uint8_t> paramData(data.begin() + 16, data.end());
+    auto params = deserialize<Args...>(paramData);
+    call_fn_void<Args...>(fun, params);
+    std::vector<uint8_t> resultData;
+    auto result = serializeFunctionCall(calleeUUID, resultData);
+    return result;
+}

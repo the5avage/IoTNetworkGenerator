@@ -45,33 +45,3 @@ public:
         RemoteValueReadOnly<T>(), client(client), topic(topic) {}
     RemoteValue() = default;
 };
-
-template <typename R, typename... Args>
-class RemoteFunction : public RemoteFunctionAbstract<R, Args...>
-{
-public:
-    PubSubClient* client;
-    const char* topic;
-
-    virtual void sendData(std::vector<uint8_t>& data)
-    {
-        client->publish(topic, data.data(), data.size());
-    }
-
-    RemoteFunction() = default;
-};
-
-template <typename... Args>
-class RemoteFunctionVoid : public RemoteFunctionVoidAbstract<Args...>
-{
-public:
-    PubSubClient* client;
-    const char* topic;
-
-    virtual void sendData(std::vector<uint8_t>& data)
-    {
-        client->publish(topic, data.data(), data.size());
-    }
-
-    RemoteFunctionVoid() = default;
-};

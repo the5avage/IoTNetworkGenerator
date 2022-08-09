@@ -6,6 +6,7 @@ BLEAdvertisedDevice* device = nullptr;
 bool connectionReady = false;
 BLEUUID serviceUUID("{{service_uuid}}");
 OutputBuffer outputBuffer;
+std::vector<uint8_t> nodeUUID{ {{thisNode.uuid.bytes|join(',')}} };
 
 {% for fun in thisNode.functions %}
 BLERemoteCharacteristic* return_{{fun.name}};
@@ -35,22 +36,16 @@ bool loadCharacteristics(BLERemoteService* service)
         return false;
     }
     {{node.name}}::{{fun.name}}.characteristic = tmpCharacteristic;
+    {{node.name}}::{{fun.name}}.node_uuid = nodeUUID;
 
     tmpCharacteristic = service->getCharacteristic("{{fun.return_uuid}}");
     if (tmpCharacteristic == nullptr)
     {
         return false;
     }
-        {% if fun.returnType is defined %}
     tmpCharacteristic->registerForNotify(notifyReturnCallback<
-        {{fun.returnType}},
         decltype({{node.name}}::{{fun.name}}),
         &{{node.name}}::{{fun.name}}>);
-        {% else %}
-    tmpCharacteristic->registerForNotify(notifyReturnVoidCallback<
-        decltype({{node.name}}::{{fun.name}}),
-        &{{node.name}}::{{fun.name}}>);
-        {% endif %}
     {% endfor %}
 {% endfor %}
 

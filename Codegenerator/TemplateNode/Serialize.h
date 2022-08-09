@@ -159,7 +159,7 @@ void call_fn_void(void(* fn)(Args...), const std::tuple<Args...>& params)
 
 inline std::vector<uint8_t> serializeFunctionCall(std::vector<uint8_t>& node_uuid, std::vector<uint8_t>& payload)
 {
-    assert(node_uuid.size() == 16); // Static value provided buy Codegenerator can only be wrong due to programming error
+    assert(node_uuid.size() == 16); // value provided buy Codegenerator can only be wrong due to programming error
     std::vector<uint8_t> result(node_uuid.begin(), node_uuid.end());
     result.insert(result.end(), payload.begin(), payload.end());
     return result;
@@ -167,7 +167,7 @@ inline std::vector<uint8_t> serializeFunctionCall(std::vector<uint8_t>& node_uui
 
 inline nonstd::optional< std::vector<uint8_t> > deserializeFunctionCall(std::vector<uint8_t>& node_uuid, std::vector<uint8_t>& data)
 {
-    assert(node_uuid.size() == 16); // Static value provided buy Codegenerator can only be wrong due to programming error
+    assert(node_uuid.size() == 16); // value provided buy Codegenerator can only be wrong due to programming error
     if (data.size() < 16)
     {
         return nonstd::nullopt;
