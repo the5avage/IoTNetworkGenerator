@@ -41,12 +41,20 @@ void connectToServer(BLEAdvertisedDevice* device)
     //Serial.print("Forming a connection to ");
     Serial.println(device->getAddress().toString().c_str());
 
-    bool result = bleClient->connect(device); 
+    bool result = bleClient->connect(device);
     if (!result)
     {
         //Serial.println(" - Connected to server failed");
         return;
     }
+
+    result = bleClient->setMTU(517);
+    if (!result)
+    {
+        //Serial.println(" - Setting mtu failed");
+        return;
+    }
+
 
     BLERemoteService *remoteService = bleClient->getService(serviceUUID);
     if (remoteService == nullptr)
@@ -82,6 +90,7 @@ void setup()
     //Serial.begin(115200);
     //Serial.println("Starting Arduino BLE Client application...");
     BLEDevice::init("ESP32-BLE-Client");
+    BLEDevice::setMTU(517);
 
     bleClient = BLEDevice::createClient();
     //Serial.println(" - Created client");
@@ -94,6 +103,8 @@ void setup()
     scan->setActiveScan(true);
 
     Setup();
+    //Serial.print("MTU size: ");
+    //Serial.println(BLEDevice::getMTU());
     xTaskCreatePinnedToCore(taskLoop, "User Loop", 10000, nullptr, 0, nullptr, !xPortGetCoreID());
 }
 
@@ -111,7 +122,7 @@ void loop()
     }
     else
     {
-        outputBuffer.sendData();
+        taskBuffer.executeTasks();
         delay(50);
         //Serial.println("connected to server");
     }

@@ -36,6 +36,8 @@ void setup()
     Serial.begin(115200);
 
     BLEDevice::init("ESP32-BLE-Server");
+    BLEDevice::setMTU(517);
+    delay(1000);
 
     Serial.println("Starting BLE Server on Address: ");
     Serial.println(BLEDevice::getAddress().toString().c_str());
@@ -84,6 +86,9 @@ void setup()
     pAdvertising->setMinPreferred(0x12);
     BLEDevice::startAdvertising();
     Serial.println("Characteristic defined! Now you can read it in the Client!");
+
+    Serial.print("MTU size: ");
+    Serial.println(BLEDevice::getMTU());
 }
 
 void loop()

@@ -5,7 +5,7 @@ BLEClient *bleClient = nullptr;
 BLEAdvertisedDevice* device = nullptr;
 bool connectionReady = false;
 BLEUUID serviceUUID("{{service_uuid}}");
-OutputBuffer outputBuffer;
+TaskBuffer taskBuffer;
 std::vector<uint8_t> nodeUUID{ {{thisNode.uuid.bytes|join(',')}} };
 
 {% for fun in thisNode.functions %}
@@ -72,25 +72,25 @@ bool loadCharacteristics(BLERemoteService* service)
     return true;
 }
 
-void OutputBuffer::addData(BLERemoteCharacteristic* target, std::vector<uint8_t>& data)
+void TaskBuffer::addTask(std::function<void(void)> task)
 {
     while (xSemaphoreTake(semaphore, (TickType_t) portTICK_PERIOD_MS * 5000) != pdTRUE)
         ;
 
-    buffer.push_back(OutputBufferEntry{target, data});
+    tasks.push_back(task);
     xSemaphoreGive(semaphore);
 }
 
-void OutputBuffer::sendData()
+void TaskBuffer::executeTasks()
 {
     if (xSemaphoreTake(semaphore, (TickType_t) portTICK_PERIOD_MS * 5000) != pdTRUE)
     {
         return;
     }
-    for (auto& e: buffer)
+    for (auto& e: tasks)
     {
-        e.target->writeValue(e.data.data(), e.data.size());
+        e();
     }
-    buffer.clear();
+    tasks.clear();
     xSemaphoreGive(semaphore);
 }

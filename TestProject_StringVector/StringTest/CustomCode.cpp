@@ -53,5 +53,7 @@ void OnDisconnect()
 
 std::string StringTest::greet(std::string forename)
 {
+    Serial.print("Say hello to: ");
+    Serial.println(forename.c_str());
     return std::string("Hello, ") + forename;
 }
