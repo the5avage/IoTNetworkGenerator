@@ -40,7 +40,7 @@ void initializeValues(PubSubClient* client)
     {% for fun in node.functions %}
     {{node.name}}::{{fun.name}}.client = client;
     {{node.name}}::{{fun.name}}.topic = "{{node.name}}/__call/{{fun.name}}";
-    {{node.name}}::{{fun.name}}.node_uuid = nodeUUID;
+    {{node.name}}::{{fun.name}}.callTag.calleeUUID = nodeUUID;
     {% endfor %}
 {% endfor %}
 }
@@ -75,26 +75,24 @@ void updateValues(char* topic, byte* message, unsigned int length)
 {% for fun in thisNode.functions %}
     if (!strcmp(topic, "{{thisNode.name}}/__call/{{fun.name}}"))
     {
-        if (length < 16)
-        {
-            return; //Invalid Data, need at least 16 byte uuid of the calling node
-        }
-        std::vector<uint8_t> calleeUUID(message, message + 16);
-        std::vector<uint8_t> paramData(message + 16, message + length);
-        uint8_t* paramPtr = paramData.data();
-    {% for param in fun.get("params", []) %}
-        {{param.type}} {{param.name}} = deserialize(paramPtr, static_cast<{{param.type}}*>(0));
-    {% endfor %}
+        std::vector<uint8_t> data(message, message + length);
     {% if fun.returnType is defined %}
-        auto result = {{thisNode.name}}::{{fun.name}}({{fun.get('params', [])|map(attribute='name')|join(',')}});
-        std::vector<uint8_t> resultData = toBytes(result);
-        std::vector<uint8_t> data = serializeFunctionCall(calleeUUID, resultData);
-        client.publish("{{thisNode.name}}/__return/{{fun.name}}", data.data(), data.size());
+        auto result = processFunctionCall<
+            decltype({{thisNode.name}}::{{fun.name}}),
+            {{fun.get('params', [])|map(attribute='type')|join(',')}}
+        >
+            (data, {{thisNode.name}}::{{fun.name}});
     {% else %}
-        {{thisNode.name}}::{{fun.name}}({{fun.get('params', [])|map(attribute='name')|join(',')}});
-        client.publish("{{thisNode.name}}/__return/{{fun.name}}", "");
-        return;
+        auto result = processFunctionCallVoid<
+            decltype({{thisNode.name}}::{{fun.name}}),
+            {{fun.get('params', [])|map(attribute='type')|join(',')}}
+        >
+            (data, {{thisNode.name}}::{{fun.name}});
     {% endif %}
+        if (result)
+        {
+            client.publish("{{thisNode.name}}/__return/{{fun.name}}", result.value().data(), result.value().size());
+        }
     }
 {% endfor %}
 }
