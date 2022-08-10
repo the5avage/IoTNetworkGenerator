@@ -9,25 +9,31 @@ class RemoteFunctionAbstract
     SemaphoreHandle_t semaphore = xSemaphoreCreateBinary();
 public:
     nonstd::optional<R> result = nonstd::nullopt;
-    std::vector<uint8_t> node_uuid;
+    FunctionCallTag callTag;
 
     virtual void sendData(std::vector<uint8_t>& data) = 0;
 
     void pickUpResult(std::vector<uint8_t>& data)
     {
-        auto payload = deserializeFunctionCall(node_uuid, data);
+        auto payload = deserializeFunctionCall(data);
         if (payload)
         {
-            result = std::get<0>(deserialize<R>(payload.value()));
-            xSemaphoreGive(semaphore);
+            FunctionCallData callData(payload.value());
+            if (callData.callTag == callTag)
+            {
+                result = std::get<0>(deserialize<R>(callData.payload));
+                xSemaphoreGive(semaphore);
+            }
         }
     }
 
     nonstd::optional<R> operator()(Args... args)
     {
+        callTag.rollingNumber += 1;
         result = nonstd::nullopt;
         std::vector<uint8_t> argData = toBytes(args...);
-        std::vector<uint8_t> data = serializeFunctionCall(node_uuid, argData);
+        FunctionCallData callData(callTag, argData);
+        std::vector<uint8_t> data = callData.serialize();
         sendData(data);
         xSemaphoreTake(semaphore, (TickType_t) 10);
 
@@ -47,17 +53,21 @@ class RemoteFunctionVoidAbstract
     SemaphoreHandle_t semaphore = xSemaphoreCreateBinary();
 public:
     bool result = false;
-    std::vector<uint8_t> node_uuid;
+    FunctionCallTag callTag;
 
     virtual void sendData(std::vector<uint8_t>& data) = 0;
 
     void pickUpResult(std::vector<uint8_t>& data)
     {
-        auto payload = deserializeFunctionCall(node_uuid, data);
+        auto payload = deserializeFunctionCall(data);
         if (payload)
         {
-            result = true;
-            xSemaphoreGive(semaphore);
+            FunctionCallData callData(payload.value());
+            if (callData.callTag == callTag)
+            {
+                result = true;
+                xSemaphoreGive(semaphore);
+            }
         }
     }
 
@@ -80,30 +90,30 @@ public:
 template <typename Fun, typename... Args>
 nonstd::optional<std::vector<uint8_t>> processFunctionCall(std::vector<uint8_t>& data, Fun fun)
 {
-    if (data.size() < 16)
+    auto deserialized = deserializeFunctionCall(data);
+    if (!deserialized)
     {
-        return nonstd::nullopt; //Invalid Data, need at least 16 byte uuid of the calling node
+        return nonstd::nullopt;
     }
-    std::vector<uint8_t> calleeUUID(data.begin(), data.begin() + 16);
-    std::vector<uint8_t> paramData(data.begin() + 16, data.end());
-    auto params = deserialize<Args...>(paramData);
+    FunctionCallData callData = deserialized.value();
+    auto params = deserialize<Args...>(callData.payload);
     auto resultData = toBytes(call_fn(fun, params));
-    auto result = serializeFunctionCall(calleeUUID, resultData);
-    return result;
+    auto result = FunctionCallData(callData.callTag, resultData);
+    return result.serialize();
 }
 
 template <typename Fun, typename... Args>
 nonstd::optional<std::vector<uint8_t>> processFunctionCallVoid(std::vector<uint8_t>& data, Fun fun)
 {
-    if (data.size() < 16)
+    auto deserialized = deserializeFunctionCall(data);
+    if (!deserialized)
     {
-        return nonstd::nullopt; //Invalid Data, need at least 16 byte uuid of the calling node
+        return nonstd::nullopt;
     }
-    std::vector<uint8_t> calleeUUID(data.begin(), data.begin() + 16);
-    std::vector<uint8_t> paramData(data.begin() + 16, data.end());
-    auto params = deserialize<Args...>(paramData);
+    FunctionCallData callData = deserialized.value();
+    auto params = deserialize<Args...>(callData.payload);
     call_fn_void<Args...>(fun, params);
     std::vector<uint8_t> resultData;
-    auto result = serializeFunctionCall(calleeUUID, resultData);
-    return result;
+    auto result = FunctionCallData(callData.callTag, resultData);
+    return result.serialize();
 }

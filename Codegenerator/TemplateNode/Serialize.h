@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <vector>
 #include <tuple>
 #include <functional>
@@ -157,30 +158,85 @@ void call_fn_void(void(* fn)(Args...), const std::tuple<Args...>& params)
     return call_fn_internal_void(fn, params, typename gens<sizeof...(Args)>::type());
 }
 
-inline std::vector<uint8_t> serializeFunctionCall(std::vector<uint8_t>& node_uuid, std::vector<uint8_t>& payload)
+struct FunctionCallTag
 {
-    assert(node_uuid.size() == 16); // value provided buy Codegenerator can only be wrong due to programming error
-    std::vector<uint8_t> result(node_uuid.begin(), node_uuid.end());
-    result.insert(result.end(), payload.begin(), payload.end());
-    return result;
-}
+    std::vector<uint8_t> calleeUUID;
+    uint8_t rollingNumber;
 
-inline nonstd::optional< std::vector<uint8_t> > deserializeFunctionCall(std::vector<uint8_t>& node_uuid, std::vector<uint8_t>& data)
-{
-    assert(node_uuid.size() == 16); // value provided buy Codegenerator can only be wrong due to programming error
-    if (data.size() < 16)
+    FunctionCallTag(
+        std::vector<uint8_t> calleeUUID,
+        uint8_t rollingNumber
+    )
+    : calleeUUID(calleeUUID), rollingNumber(rollingNumber) {
+        // value provided buy Codegenerator can only be wrong due to programming error
+        assert(calleeUUID.size() == 16);
+    }
+
+    FunctionCallTag(std::vector<uint8_t> rawData) {
+        // must be checked before calling this constructor
+        assert(rawData.size() >= 17);
+        calleeUUID = std::vector<uint8_t>(rawData.begin(), rawData.begin() + 16);
+        rollingNumber = rawData[16];
+    }
+
+    FunctionCallTag()
     {
-        return nonstd::nullopt;
+        calleeUUID = std::vector<uint8_t>(16);
+        rollingNumber = 0;
+    }
+};
+
+inline bool operator==(FunctionCallTag& first, FunctionCallTag& second)
+{
+    if (first.rollingNumber != second.rollingNumber)
+    {
+        return false;
     }
 
     for (int i = 0; i < 16; i++)
     {
-        if (node_uuid[i] != data[i])
+        if (first.calleeUUID[i] != second.calleeUUID[i])
         {
-            return nonstd::nullopt;
+            return false;
         }
     }
+    return true;
+}
 
-    std::vector<uint8_t>result(data.begin() + 16, data.end());
-    return result;
+inline bool operator!=(FunctionCallTag& first, FunctionCallTag& second)
+{
+    return !(first == second);
+}
+
+struct FunctionCallData
+{
+    FunctionCallTag callTag;
+    std::vector<uint8_t> payload;
+
+    FunctionCallData(
+        FunctionCallTag callTag,
+        std::vector<uint8_t> payload
+    )
+    : callTag(callTag), payload(payload) {}
+
+    std::vector<uint8_t> serialize()
+    {
+        std::vector<uint8_t> result(callTag.calleeUUID.begin(), callTag.calleeUUID.end());
+        result.push_back(callTag.rollingNumber);
+        result.insert(result.end(), payload.begin(), payload.end());
+        return result;
+    }
+};
+
+inline nonstd::optional< FunctionCallData > deserializeFunctionCall(std::vector<uint8_t>& data)
+{
+    if (data.size() < 17)
+    {
+        return nonstd::nullopt;
+    }
+
+    FunctionCallTag functionTag(data);
+
+    std::vector<uint8_t> payload(data.begin() + 17, data.end());
+    return FunctionCallData(functionTag, payload);
 }

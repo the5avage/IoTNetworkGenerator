@@ -36,7 +36,7 @@ bool loadCharacteristics(BLERemoteService* service)
         return false;
     }
     {{node.name}}::{{fun.name}}.characteristic = tmpCharacteristic;
-    {{node.name}}::{{fun.name}}.node_uuid = nodeUUID;
+    {{node.name}}::{{fun.name}}.callTag.calleeUUID = nodeUUID;
 
     tmpCharacteristic = service->getCharacteristic("{{fun.return_uuid}}");
     if (tmpCharacteristic == nullptr)
