@@ -1,3 +1,4 @@
+from pickletools import uint8
 from shutil import ExecError
 from urllib import request
 import flask
@@ -9,6 +10,7 @@ import threading
 import sys
 import json
 import serialize
+import uuid
 
 def usage():
     print( sys.argv[0])
@@ -32,29 +34,29 @@ for node in config["nodes"]:
     if "variables" in node:
         cur.execute(f"ATTACH DATABASE '{node['name']}.db' as '{node['name']}'")
         for variable in node["variables"]:
-            type = ' '.join(variable["type"].split()) # collapses multiple whitespaces to one
-            if type == "float" or type == "double":
+            typename = ' '.join(variable["type"].split()) # collapses multiple whitespaces to one
+            if typename == "float" or typename == "double":
                 cur.execute(f"""
                     CREATE TABLE IF NOT EXISTS
                         {node['name']}.{variable['name']}(
                         value REAL NOT NULL,
                         timestamp INTEGER NOT NULL);"""
                 )
-            elif serialize.isIntegerType(type):
+            elif serialize.isIntegerType(typename):
                 cur.execute(f"""
                     CREATE TABLE IF NOT EXISTS
                         {node['name']}.{variable['name']}(
                         value INTEGER NOT NULL,
                         timestamp INTEGER NOT NULL);"""
                 )
-            elif type == "std::string":
+            elif typename == "std::string":
                 cur.execute(f"""
                     CREATE TABLE IF NOT EXISTS
                         {node['name']}.{variable['name']}(
                         value TEXT NOT NULL,
                         timestamp INTEGER NOT NULL);"""
                 )
-            elif type.startswith("std::vector"):
+            elif typename.startswith("std::vector"):
                 cur.execute(f"""
                     CREATE TABLE IF NOT EXISTS
                         {node['name']}.{variable['name']}(
@@ -62,14 +64,17 @@ for node in config["nodes"]:
                         timestamp INTEGER NOT NULL);"""
                 )
             else:
-                raise Exception(f"Unknown type: {type}")
+                raise Exception(f"Unknown typename: {typename}")
+
+root_uuid = uuid.UUID("c0353121-d096-45b3-94f8-67094e0eea25")
+gatewayUUID = uuid.uuid5(root_uuid, "_Gateway")
 
 param = {"bokeh" : dateplot.getStaticResources()}
 for node in config["nodes"]:
     for variable in node.get("variables", []):
         fullName = f"{node['name']}.{variable['name']}"
         param[fullName] = "n/a"
-    
+
     for fun in node.get("functions", []):
         argumentTypes = list(map(lambda x: x["type"], fun.get("params", [])))
         argumentNames = list(map(lambda x: x["name"], fun.get("params", [])))
@@ -77,6 +82,9 @@ for node in config["nodes"]:
         declaration = fun.get("returnType", "void") + " " + fun["name"] + "("
         declaration +=  ", ".join(arguments) + ")"
         fun["declaration"] = declaration
+        fun["callTag"] = serialize.FunctionCallTag(gatewayUUID, 0)
+        fun["mqtt_call_id"] = f"{node['name']}/__call/{fun['name']}"
+        fun["mqtt_return_id"] = f"{node['name']}/__return/{fun['name']}"
 
 def insertValue(tablename, value):
     with lock:
@@ -92,22 +100,48 @@ def getTimeSeries(tablename):
         return dates, values
 
 mqttBroker ="192.168.178.40"
+client = mqtt.Client("Gateway")
+
 def on_message(client, userdata, message):
     print("received topic:" + message.topic)
-    nodeName, variableName = message.topic.split("/")
-    for node in config["nodes"]:
-        if nodeName == node["name"]:
-            for variable in node.get("variables", []):
-                if variableName == variable["name"]:
-                    value = serialize.deserialize(message.payload, variable["type"])
-                    fullName = f"{nodeName}.{variableName}"
-                    if variable["type"].startswith("std::vector"):
-                        insertValue(fullName, message.payload)
-                    else:
-                        insertValue(fullName, value)
-                    param[fullName] = str(value)
+    splitted = message.topic.split("/")
+    if len(splitted) == 2:
+        nodeName, variableName = splitted
+        for node in config["nodes"]:
+            if nodeName == node["name"]:
+                for variable in node.get("variables", []):
+                    if variableName == variable["name"]:
+                        value = serialize.deserialize(message.payload, variable["type"])
+                        fullName = f"{nodeName}.{variableName}"
+                        if variable["type"].startswith("std::vector"):
+                            insertValue(fullName, message.payload)
+                        else:
+                            insertValue(fullName, value)
+                        param[fullName] = str(value)
+                        return
+    elif len(splitted) == 3:
+        nodeName, direction, functionName = splitted
+        if direction != "__return":
+            print("Should only subscribe to return values")
+            return
 
-client = mqtt.Client("Gateway")
+        for node in config["nodes"]:
+            for fun in node["functions"]:
+                if functionName == fun["name"]:
+                    tag, data =  serialize.detagFunction(message.payload)
+                    expectedTag = fun["callTag"]
+
+                    if (tag.rollingNumber != expectedTag.rollingNumber or tag.calleeUUID != expectedTag.calleeUUID.bytes):
+                        print("Received functin result does not correspond to sended call")
+                        return
+                    fun["returnValue"] = serialize.deserialize(data, fun["returnType"])
+                    print("Got function return value")
+                    print(fun["returnValue"])
+                    client.unsubscribe(message.topic)
+                    return
+    else:
+        print("Unknown number of elemnts in topic")
+
 client.connect(mqttBroker)
 print("client connected")
 client.loop_start()
@@ -115,6 +149,7 @@ client.loop_start()
 for node in config["nodes"]:
     for variable in node["variables"]:
         client.subscribe(f"{node['name']}/{variable['name']}")
+
 
 client.on_message=on_message
 app = flask.Flask(__name__)
@@ -162,19 +197,35 @@ def modalFunctionForm(nodeName, funName):
     result = flask.render_template("callModal.html", param=param, config=config, node=node, fun=fun)
     return result
 
-@app.route("/callFunction/<nodeName>/<funName>", methods=['PUT'])
-def testCallForm(nodeName, funName):
-    print("Call function")
+@app.route("/return/<nodeName>/<funName>")
+def updateReturnValue(nodeName, funName):
     node = next(x for x in config["nodes"] if x["name"] == nodeName)
     fun = next(x for x in node["functions"] if x["name"] == funName)
+    if fun["returnValue"] is None:
+        return flask.render_template("waitFunctionReturn.html", param=param, config=config, node=node, fun=fun)
+    return "<div>" + str(fun["returnValue"]) + "</div>"
+
+@app.route("/callFunction/<nodeName>/<funName>", methods=['PUT'])
+def testCallForm(nodeName, funName):
+    node = next(x for x in config["nodes"] if x["name"] == nodeName)
+    fun = next(x for x in node["functions"] if x["name"] == funName)
+    fun["returnValue"] = None
+    fun["callTag"].rollingNumber = (fun["callTag"].rollingNumber + 1) % 256 # simulate 8 bit wraparound
     #print(flask.request.form)
     try:
+        paramData = bytearray()
         for p in fun.get("params", []):
             #print(f"Received param {p['name']}: {flask.request.form[p['name']]}")
-            funParam = serialize.fromString(flask.request.form[p['name']], p["type"])
-            print(f"Converted param: {funParam}")
+            funParam = serialize.serialize(serialize.fromString(flask.request.form[p['name']], p["type"]), p["type"])
+            paramData += funParam
 
-        result = flask.render_template("lds_spinner.html", param=param, config=config)
+        functionData = serialize.tagFunction(fun["callTag"], paramData)
+
+        client.subscribe(f"{node['name']}/__return/{fun['name']}")
+        info = client.publish(fun["mqtt_call_id"], functionData)
+        info.wait_for_publish()
+
+        result = flask.render_template("waitFunctionReturn.html", param=param, config=config, node=node, fun=fun)
         return result
     except Exception as e:
         return f"<div>Error: {str(e)}</div>"

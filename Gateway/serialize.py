@@ -1,4 +1,6 @@
+from pickletools import uint8
 import struct
+import uuid
 
 # Maps types to format strings according to struct.unpack specification.
 # https://docs.python.org/3/library/struct.html
@@ -59,7 +61,7 @@ def serialize(value, typename):
         fmt = typeFmt.get(innerType, None)
         if fmt is None:
             raise Exception(f"Unknown type {innerType}")
-        return struct.pack(f"I{len(value)}{fmt}", len(value), value)
+        return struct.pack(f"I{len(value)}{fmt}", len(value), *value)
     else:
         raise Exception(f"Unknown type {typename}")
 
@@ -80,3 +82,17 @@ def fromString(s, typename):
         return result
     else:
         raise Exception(f"Unknown type {typename}")
+
+class FunctionCallTag:
+    def __init__(self, uuid, rollingNumber):
+        self.calleeUUID = uuid
+        self.rollingNumber = rollingNumber
+
+def tagFunction(tag, payload):
+    result = tag.calleeUUID.bytes
+    result += serialize(tag.rollingNumber, "uint8_t")
+    result += payload
+    return result
+
+def detagFunction(data):
+    return (FunctionCallTag(bytearray(data[0:16]), data[16]), data[17:])
