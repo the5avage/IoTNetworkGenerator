@@ -147,7 +147,7 @@ print("client connected")
 client.loop_start()
 
 for node in config["nodes"]:
-    for variable in node["variables"]:
+    for variable in node.get("variables", []):
         client.subscribe(f"{node['name']}/{variable['name']}")
 
 
