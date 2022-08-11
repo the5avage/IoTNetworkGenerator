@@ -178,17 +178,36 @@ def showPlot(node, variable):
     result = flask.render_template("plot.html", param=param, config=config)
     return result
 
-@app.route("/modalPlot/<node>/<variable>")
-def modalPlot(node, variable):
-    variableName = f"{node}.{variable}"
-    dates, values = getTimeSeries(variableName)
-    script, div = dateplot.renderPlot(dates, values, variableName)
-    param["modalName"] = node + variable
-    param["plot_script"] = script
-    param["plot_div"] = div
-    param["plot_target"] = f"{node}/{variable}"
-    result = flask.render_template("plotModal.html", param=param, config=config)
-    return result
+@app.route("/modalPlot/<nodeName>/<variableName>")
+def modalPlot(nodeName, variableName):
+    node = next(x for x in config["nodes"] if x["name"] == nodeName)
+    variable = next(x for x in node["variables"] if x["name"] == variableName)
+    variableDescription = f"{nodeName}.{variableName}"
+    typename = variable["type"]
+    dates, values = getTimeSeries(variableDescription)
+    if serialize.isIntegerType(typename) or typename == "double" or typename == "float":
+        script, div = dateplot.renderPlot(dates, values, variableDescription)
+        param["modalName"] = nodeName + variableName
+        param["plot_script"] = script
+        param["plot_div"] = div
+        param["plot_target"] = f"{nodeName}/{variableName}"
+        return flask.render_template("plotModal.html", param=param, config=config)
+
+    print("Number of elements from database: ")
+    print(len(dates))
+    data = []
+    for d in zip(dates, values):
+        datum = {}
+        datum["timestamp"] = d[0]
+        if typename == "std::string":
+            datum["value"] = d[1]
+        elif typename.startswith("std::vector"):
+            datum["value"] = str(serialize.deserialize(d[1], typename))
+        else:
+            datum["value"] = "Cannot display value of type " + typename
+        data.append(datum)
+
+    return flask.render_template("listModal.html", data=data, node=nodeName, variable=variableName)
 
 @app.route("/modalFunctionForm/<nodeName>/<funName>")
 def modalFunctionForm(nodeName, funName):

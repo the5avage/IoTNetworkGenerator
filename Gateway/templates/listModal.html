@@ -1,0 +1,28 @@
+<div class="modal CallModal" id="modal_1_popup">
+  <input id="modal_1" type="checkbox" checked/>
+  <label for="modal_1" class="overlay"
+    hx-get="/closeModal" hx-trigger="click" hx-target="#modal_1_popup" hx-swap="outerHTML"></label>
+  <div class="flex one grow CallModal">
+    <h2 class="flex center">{{node}} {{variable}}</h2>
+    <table>
+        <thead>
+            <th>Time</th>
+            <th>Value</th>
+        </thead>
+        <tbody>
+{% for datum in data %}
+            <tr>
+                <td>
+                    {{datum.timestamp}}
+                </td>
+                <td>
+                    {{datum.value}}
+                </td>
+            </tr>
+{% endfor %}
+        </tbody>
+    </table>
+    <button for="modal_1" class="button dangerous"
+            hx-get="/closeModal" hx-trigger="click" hx-target="#modal_1_popup" hx-swap="outerHTML">Close</button>
+  </div>
+</div>
