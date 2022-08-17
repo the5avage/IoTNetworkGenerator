@@ -18,15 +18,31 @@ bool loadCharacteristics(BLERemoteService* service)
 
 {% for node in otherNodes %}
     {% for v in node.variables %}
+        {% if v.composed is defined %}
+            {% for uuid in v.composed.uuids %}
+    tmpCharacteristic = service->getCharacteristic("{{uuid}}");
+    if (tmpCharacteristic == nullptr)
+    {
+        return false;
+    }
+    {{node.name}}::{{v.name}}.characteristics.push_back(tmpCharacteristic);
+            {% endfor %}
+    {{node.name}}::{{v.name}}.attributeSize = {{v.composed.size}};
+    {{node.name}}::{{v.name}}.numberOfAttributes = {{v.composed.length}};
+    {{node.name}}::{{v.name}}.characteristics[0]->registerForNotify(notifyComposedAttribute<{{v.type}}, &{{node.name}}::{{v.name}}>);
+        {% else %}
     tmpCharacteristic = service->getCharacteristic("{{v.uuid}}");
     if (tmpCharacteristic == nullptr)
     {
         return false;
     }
-        {% if v.isObserved is defined %}
+    {{thisNode.name}}::{{v.name}} = RemoteValue<{{v.type}}>(tmpCharacteristic);
+            {% if v.isObserved is defined %}
     tmpCharacteristic->registerForNotify(notifyCallback<{{v.type}}, {{node.name}}::onChange_{{v.name}}>);
+            {% endif %}
         {% endif %}
-    {{node.name}}::{{v.name}} = RemoteValueReadOnly<{{v.type}}>(tmpCharacteristic);
+
+    tmpCharacteristic = service->getCharacteristic("{{v.uuid}}");
     {% endfor %}
 
     {% for fun in node.functions %}
@@ -50,12 +66,26 @@ bool loadCharacteristics(BLERemoteService* service)
 {% endfor %}
 
 {% for v in thisNode.variables %}
+    {% if v.composed is defined %}
+        {% for uuid in v.composed.uuids %}
+    tmpCharacteristic = service->getCharacteristic("{{uuid}}");
+    if (tmpCharacteristic == nullptr)
+    {
+        return false;
+    }
+    {{thisNode.name}}::{{v.name}}.characteristics.push_back(tmpCharacteristic);
+        {% endfor %}
+    {{thisNode.name}}::{{v.name}}.attributeSize = {{v.composed.size}};
+    {{thisNode.name}}::{{v.name}}.numberOfAttributes = {{v.composed.length}};
+    {{thisNode.name}}::{{v.name}}.characteristics[0]->registerForNotify(notifyComposedAttribute<{{v.type}}, &{{thisNode.name}}::{{v.name}}>);
+    {% else %}
     tmpCharacteristic = service->getCharacteristic("{{v.uuid}}");
     if (tmpCharacteristic == nullptr)
     {
         return false;
     }
     {{thisNode.name}}::{{v.name}} = RemoteValue<{{v.type}}>(tmpCharacteristic);
+    {% endif %}
 {% endfor %}
 
 {% for fun in thisNode.functions %}

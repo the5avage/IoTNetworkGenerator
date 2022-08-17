@@ -3,6 +3,7 @@
 #include <BLEClient.h>
 #include <BLEAdvertisedDevice.h>
 #include "RemoteValue.h"
+#include "ComposedAttribute.h"
 #include <functional>
 
 extern BLEUUID serviceUUID;
@@ -28,6 +29,16 @@ struct TaskBuffer
 };
 
 extern TaskBuffer taskBuffer;
+
+template<typename T, ComposedAttribute<T>* attribute>
+void notifyComposedAttribute(BLERemoteCharacteristic* remoteCharacteristic, uint8_t* data, size_t length, bool isNotify)
+{
+    taskBuffer.addTask([=](){
+        attribute->update();
+    });
+}
+
+
 
 template<typename T, void (*Fun)(T)>
 void notifyCallback(BLERemoteCharacteristic* remoteCharacteristic, uint8_t* data, size_t length, bool isNotify)

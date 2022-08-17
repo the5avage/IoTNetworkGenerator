@@ -9,7 +9,13 @@ BLEService *service;
 namespace {{node.name}}
 {
     {% for v in node.get('variables', []) %}
+        {% if v.composed is defined %}
+            {% for uuid in v.composed.uuids %}
+Characteristic<{{v.type}}> *{{v.name}}_{{loop.index}};
+            {% endfor%}
+        {% else %}
 Characteristic<{{v.type}}> *{{v.name}};
+        {% endif %}
     {% endfor %}
 
     {% for fun in node.get('functions', []) %}
@@ -50,15 +56,21 @@ void setup()
 {% for node in nodes %}
     {% for v in node.variables %}
         {% set name = node.name ~ '::' ~ v.name %}
+        {% if v.composed is defined %}
+            {% for uuid in v.composed.uuids %}
+    {{name}}_{{loop.index}} = new Characteristic<{{v.type}}>(
+        "{{uuid}}",
+        BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY);
+    service->addCharacteristic({{name}}_{{loop.index}});
+    {{name}}_{{loop.index}}->setCallbacks(characteristicCallback);
+            {% endfor%}
+        {% else %}
     {{name}} = new Characteristic<{{v.type}}>(
         "{{v.uuid}}",
         BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY);
     service->addCharacteristic({{name}});
     {{name}}->setCallbacks(characteristicCallback);
-        {% if v.default %}
-    {{name}}->set({{v.default}});
         {% endif %}
-
     {% endfor %}
 
     {% for fun in node.functions %}

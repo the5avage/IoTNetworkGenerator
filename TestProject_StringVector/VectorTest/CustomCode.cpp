@@ -23,13 +23,24 @@ void Loop()
         {
             Serial.println("Error calling function");
         }
+
+        std::vector<int> primes = {2, 3, 5, 7};
+        testVector.set(primes);
+        auto replyStr = StringTest::testString.get();
+        if (replyStr)
+        {
+            Serial.println("Got teststring: ");
+            Serial.println(replyStr.value().c_str());
+        }
+        else
+        {
+            Serial.println("Error, cant get teststring");
+        }
     }
     else
     {
         Serial.println("No connection to server");
     }
-    std::vector<int> primes = {2, 3, 5, 7};
-    testVector.set(primes);
     delay(1000);
 }
 

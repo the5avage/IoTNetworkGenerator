@@ -1,13 +1,18 @@
 #pragma once
 
 #include "RemoteValue.h"
+#include "ComposedAttribute.h"
 
 
 {% for node in otherNodes %}
 namespace {{node.name}}
 {
     {% for v in node.variables %}
+        {% if v.composed is defined %}
+extern ComposedAttribute<{{v.type}}> {{v.name}};
+        {% else %}
 extern RemoteValueReadOnly<{{v.type}}> {{v.name}};
+        {% endif %}
         {% if v.isObserved is defined %}
 void onChange_{{v.name}}({{v.type}});
         {% endif %}
@@ -27,9 +32,12 @@ extern RemoteFunctionVoid<{{ fun.get('params', [])|map(attribute='type')|join(',
 namespace {{thisNode.name}}
 {
 {% for v in thisNode.variables %}
-extern RemoteValue<{{v.type}}> {{v.name}};
+    {% if v.composed is defined %}
+extern ComposedAttribute<{{v.type}}> {{v.name}};
+    {% else %}
+extern RemoteValueReadOnly<{{v.type}}> {{v.name}};
+    {% endif %}
 {% endfor %}
-
 
 {% for fun in thisNode.get('functions', []) %}
 {% set paramDecl = [] %}

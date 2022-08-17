@@ -1,11 +1,16 @@
 #include "RemoteValues.h"
 #include "RemoteValue.h"
+#include "ComposedAttribute.h"
 
 {% for node in otherNodes %}
 namespace {{node.name}}
 {
     {% for v in node.variables %}
+        {% if v.composed is defined %}
+ComposedAttribute<{{v.type}}> {{v.name}};
+        {% else %}
 RemoteValueReadOnly<{{v.type}}> {{v.name}};
+        {% endif %}
     {% endfor %}
 
     {% for fun in node.get('functions', []) %}
@@ -22,7 +27,11 @@ RemoteFunctionVoid<{{ fun.get('params', [])|map(attribute='type')|join(',') }}> 
 namespace {{thisNode.name}}
 {
 {% for v in thisNode.variables %}
-RemoteValue<{{v.type}}> {{v.name}};
+    {% if v.composed is defined %}
+ComposedAttribute<{{v.type}}> {{v.name}};
+    {% else %}
+RemoteValueReadOnly<{{v.type}}> {{v.name}};
+    {% endif %}
 {% endfor %}
 }
 
