@@ -8,6 +8,9 @@ void Setup()
     Serial.println("Setup finished");
 }
 
+std::vector<int> counts;
+int count = 0;
+
 void Loop()
 {
     if (isConnected())
@@ -23,9 +26,8 @@ void Loop()
         {
             Serial.println("Error calling function");
         }
-
-        std::vector<int> primes = {2, 3, 5, 7};
-        testVector.set(primes);
+        counts.push_back(count++);
+        testVector.set(counts);
         auto replyStr = StringTest::testString.get();
         if (replyStr)
         {

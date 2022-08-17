@@ -21,8 +21,12 @@ public:
             FunctionCallData callData(payload.value());
             if (callData.callTag == callTag)
             {
-                result = std::get<0>(deserialize<R>(callData.payload));
-                xSemaphoreGive(semaphore);
+                auto deserialized = deserialize<R>(callData.payload);
+                if (deserialized.has_value())
+                {
+                    result = std::get<0>(deserialized.value());
+                    xSemaphoreGive(semaphore);
+                }
             }
         }
     }
@@ -97,7 +101,11 @@ nonstd::optional<std::vector<uint8_t>> processFunctionCall(std::vector<uint8_t>&
     }
     FunctionCallData callData = deserialized.value();
     auto params = deserialize<Args...>(callData.payload);
-    auto resultData = toBytes(call_fn(fun, params));
+    if (!params.has_value())
+    {
+        return nonstd::nullopt;
+    }
+    auto resultData = toBytes(call_fn(fun, params.value()));
     auto result = FunctionCallData(callData.callTag, resultData);
     return result.serialize();
 }
@@ -112,7 +120,11 @@ nonstd::optional<std::vector<uint8_t>> processFunctionCallVoid(std::vector<uint8
     }
     FunctionCallData callData = deserialized.value();
     auto params = deserialize<Args...>(callData.payload);
-    call_fn_void<Args...>(fun, params);
+    if (!params.has_value())
+    {
+        return nonstd::nullopt;
+    }
+    call_fn_void<Args...>(fun, params.value());
     std::vector<uint8_t> resultData;
     auto result = FunctionCallData(callData.callTag, resultData);
     return result.serialize();

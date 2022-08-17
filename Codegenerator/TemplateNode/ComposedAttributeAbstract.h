@@ -44,7 +44,12 @@ public:
             }
         }
 
-        cachedValue = std::get<0>(deserialize<T>(serializedData));
+        auto deserialized = deserialize<T>(serializedData);
+        if (!deserialized.has_value())
+        {
+            return;
+        }
+        cachedValue = std::get<0>(deserialized.value());
         hasValue = true;
         if (onUpdate)
         {

@@ -33,6 +33,22 @@ void Loop()
             Serial.println("Error calling function");
         }
         testString.set("Hello cruel world");
+
+        auto vec = VectorTest::testVector.get();
+        if (vec.has_value())
+        {
+            Serial.print("value of  testvector [");
+            for (auto i: vec.value())
+            {
+                Serial.print(i);
+                Serial.print(",");
+            }
+            Serial.println("]");
+        }
+        else
+        {
+            Serial.println("Error receiving testvector");
+        }
     }
     else
     {

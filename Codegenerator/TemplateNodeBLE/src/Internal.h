@@ -54,7 +54,11 @@ void notifyCallback(BLERemoteCharacteristic* remoteCharacteristic, uint8_t* data
         {
             rawData = std::vector<uint8_t>(data, data + length);
         }
-        Fun(std::get<0>(deserialize<T>(rawData)));
+        auto deserialized = deserialize<T>(rawData);
+        if (deserialized.has_value())
+        {
+            Fun(std::get<0>(deserialized));
+        }
     });
 }
 

@@ -7,6 +7,7 @@
 #include <type_traits>
 #include <string>
 #include "optional.hpp"
+#include <stdexcept>
 
 template <typename T>
 std::vector<uint8_t> toBytes(T data)
@@ -64,48 +65,80 @@ std::vector<uint8_t> toBytes(Args... args)
 }
 
 template <typename T>
-T deserialize(uint8_t*& data, T*)
+T deserialize(uint8_t*& data, uint8_t* end, T*)
 {
+    if (end - data < sizeof(T))
+    {
+        throw std::runtime_error("Missing bytes to deserialize value");
+    }
     T result = *(T*) data;
     data += sizeof(T);
     return result;
 }
 
 template <typename T>
-std::vector<T> deserialize(uint8_t*& data, std::vector<T>*)
+std::vector<T> deserialize(uint8_t*& data, uint8_t* end, std::vector<T>*)
 {
+    if (end - data < sizeof(uint32_t))
+    {
+        throw std::runtime_error("Expected at least 4 bytes containing length of vector");
+    }
     std::vector<T> result;
     uint32_t len = *(uint32_t*)(data);
     data += sizeof(uint32_t);
+
     for (uint32_t i = 0; i < len; i++)
     {
-        result.push_back(deserialize(data, static_cast<T*>(0)));
+        result.push_back(deserialize(data, end, static_cast<T*>(0)));
     }
 
     return result;
 }
 
-inline std::string deserialize(uint8_t*& data, std::string*)
+inline std::string deserialize(uint8_t*& data, uint8_t* end, std::string*)
 {
+    if (end - data < sizeof(uint32_t))
+    {
+        throw std::runtime_error("Expected at least 4 bytes containing length of string");
+    }
     uint32_t len = *(uint32_t*)(data);
     data += sizeof(uint32_t);
 
+    if (end - data < len)
+    {
+        throw std::runtime_error("Expected string data is missing");
+    }
     std::string result(data, data + len);
     data += len;
     return result;
 }
 
 template <typename... Args>
-std::tuple<Args...> deserialize(std::vector<uint8_t> vec)
+nonstd::optional<std::tuple<Args...>> deserialize(std::vector<uint8_t> vec)
 {
     uint8_t* data = vec.data();
-    return std::tuple<Args...>{ deserialize(data, static_cast<Args*>(0))... };
+    uint8_t* end = data + vec.size();
+    try
+    {
+        return std::tuple<Args...>{ deserialize(data, end, static_cast<Args*>(0))... };
+    }
+    catch(const std::exception& e)
+    {
+        return nonstd::nullopt;
+    }
 }
 
 template <typename... Args>
-std::tuple<Args...> deserialize(uint8_t* data)
+nonstd::optional<std::tuple<Args...>> deserialize(uint8_t* data, uint8_t* end)
 {
-    return std::tuple<Args...>{ deserialize(data, static_cast<Args*>(0))... };
+    try
+    {
+        return std::tuple<Args...>{ deserialize(data, end, static_cast<Args*>(0))... };
+    }
+    catch(const std::exception& e)
+    {
+        return nonstd::nullopt;
+    }
 }
 
 //https://riptutorial.com/cplusplus/example/24746/storing-function-arguments-in-std--tuple
