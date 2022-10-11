@@ -12,20 +12,28 @@ void Loop()
 {
     if (isConnected())
     {
-        float innenTemp;
-        float aussenTemp;
-        if (InsideTemperatureSensor::temperature.get(innenTemp) && 
-            OutsideTemperatureSensor::temperature.get(aussenTemp))
+        auto outsideTemp = OutsideTemperatureSensor::temperature.get()
+        if (outsideTemp.has_value())
         {
-            Serial.print("Innentemperatur: ");
-            Serial.print(innenTemp);
-            Serial.print(" Aussentemperatur: ");
-            Serial.println(aussenTemp);
+            Serial.print("Outside temperature: ");
+            Serial.println(outsideTemp.value());
         }
         else
         {
-            Serial.println("Error reading temperatures");
+            Serial.println("Error reading outside temperature");
         }
+
+        auto insideTemp = OutsideTemperatureSensor::temperature.get()
+        if (insideTemp.has_value())
+        {
+            Serial.print("Inside temperature: ");
+            Serial.println(insideTemp.value());
+        }
+        else
+        {
+            Serial.println("Error reading inside temperature");
+        }
+
         auto res = OutsideTemperatureSensor::getTimeSinceStart();
         if (res)
         {

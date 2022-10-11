@@ -30,7 +30,7 @@ namespace {{thisNode.name}}
     {% if v.composed is defined %}
 ComposedAttribute<{{v.type}}> {{v.name}};
     {% else %}
-RemoteValueReadOnly<{{v.type}}> {{v.name}};
+RemoteValue<{{v.type}}> {{v.name}};
     {% endif %}
 {% endfor %}
 }
