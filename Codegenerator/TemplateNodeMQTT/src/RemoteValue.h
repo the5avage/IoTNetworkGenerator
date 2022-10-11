@@ -16,14 +16,13 @@ protected:
     T cachedValue;
     bool hasValue = false;
 public:
-    bool get(T& value)
+    nonstd::optional<T> get()
     {
         if (hasValue)
         {
-            value = cachedValue;
-            return true;
+            return cachedValue;
         }
-        return false;
+        return nonstd::nullopt;
     }
 
     RemoteValueReadOnly() = default;

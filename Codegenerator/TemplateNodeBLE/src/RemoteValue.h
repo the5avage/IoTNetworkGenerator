@@ -14,15 +14,14 @@ class RemoteValueReadOnly
 protected:
     BLERemoteCharacteristic* characteristic = nullptr;
 public:
-    bool get(T& value)
+    nonstd::optional<T> get()
     {
         std::string rawValue = characteristic->readValue();
         if (rawValue.size() == 0)
         {
-            return false;
+            return nonstd::nullopt;
         }
-        value = std::get<0>(deserialize<T>((uint8_t*)rawValue.data()));
-        return true;
+        return std::get<0>(deserialize<T>((uint8_t*)rawValue.data()));
     }
 
     RemoteValueReadOnly(BLERemoteCharacteristic* characteristic) : characteristic(characteristic) {}
