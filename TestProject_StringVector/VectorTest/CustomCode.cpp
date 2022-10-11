@@ -26,11 +26,11 @@ void Loop()
         {
             Serial.println("Error calling function");
         }*/
-        
+
         counts.push_back(count++);
         testVector.set(counts);
         Serial.println("Set testvector");
-        /*
+
         auto replyStr = StringTest::testString.get();
         if (replyStr)
         {
@@ -40,7 +40,7 @@ void Loop()
         else
         {
             Serial.println("Error, cant get teststring");
-        }*/
+        }
     }
     else
     {

@@ -23,7 +23,11 @@
             [
                 {
                     "name" : "testString",
-                    "type" : "std::string"
+                    "type" : "std::string",
+                    "composed" : {
+                        "size" : 64,
+                        "length" : 5
+                    }
                 }
             ],
             "functions" :
@@ -55,7 +59,11 @@
             [
                 {
                     "name" : "testVector",
-                    "type" : "std::vector<int>"
+                    "type" : "std::vector<int>",
+                    "composed" : {
+                        "size" : 64,
+                        "length" : 5
+                    }
                 }
             ],
             "functions" :

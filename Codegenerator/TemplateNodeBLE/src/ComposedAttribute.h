@@ -28,9 +28,9 @@ public:
     {
         log("--> update", Loglevel::debug);
         std::vector<std::vector<uint8_t>> data;
-        for (auto& c: characteristics)
+        for (int i = characteristics.size() - 1; i >= 0; i--)
         {
-            std::string v = c->readValue();
+            std::string v = characteristics[i]->readValue();
             data.push_back(std::vector<uint8_t>(v.begin(), v.end()));
         }
         this->pickUpValue(data);

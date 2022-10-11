@@ -7,9 +7,6 @@ import jinja2
 import copy
 import sys
 
-composedAttributeLength = 5
-composedAttributeSize = 64
-
 def usage():
     print( sys.argv[0])
     print()
@@ -59,10 +56,9 @@ for node in config["nodes"]:
     node["uuid"] = uuid.uuid5(root_uuid, node['name'])
     for v in node.get("variables", []):
         v["uuid"] = uuid.uuid5(root_uuid, f"{node['name']}::{v['name']}")
-        if v["type"].startswith("std::string") or v["type"].startswith("std::vector"):
-            v["composed"] = {"length" : composedAttributeLength, "size" : composedAttributeSize}
+        if "composed" in v:
             v["composed"]["uuids"] = []
-            for i in range(composedAttributeLength):
+            for i in range(v["composed"]["length"]):
                 v["composed"]["uuids"].append(uuid.uuid5(root_uuid, f"{node['name']}::{v['name']}_{i}"))
 
     for f in node.get("functions", []):
