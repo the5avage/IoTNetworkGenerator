@@ -2,6 +2,8 @@
 
 #include "ComposedAttributeAbstract.h"
 #include "BLERemoteCharacteristic.h"
+#include "Taskbuffer.h"
+#include <Arduino.h>
 
 template <typename T>
 class ComposedAttribute: public ComposedAttributeAbstract<T>
@@ -12,15 +14,19 @@ public:
     void sendData(std::vector<std::vector<uint8_t>> splittedData) override
     {
         assert(splittedData.size() == characteristics.size());
-
-        for (int i = characteristics.size() - 1; i >= 0; i--)
-        {
-            characteristics[i]->writeValue(splittedData[i].data(), splittedData[i].size());
-        }
+        taskBuffer.addTask([=](){
+            log("--> sendData", Loglevel::debug);
+            for (int i = characteristics.size() - 1; i >= 0; i--)
+            {
+                characteristics[i]->writeValue((uint8_t*)splittedData[i].data(), splittedData[i].size());
+            }
+            log("<-- sendData", Loglevel::debug);
+        });
     }
 
     void update()
     {
+        log("--> update", Loglevel::debug);
         std::vector<std::vector<uint8_t>> data;
         for (auto& c: characteristics)
         {
@@ -28,5 +34,6 @@ public:
             data.push_back(std::vector<uint8_t>(v.begin(), v.end()));
         }
         this->pickUpValue(data);
+        log("<-- update", Loglevel::debug);
     }
 };

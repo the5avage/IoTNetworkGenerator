@@ -8,6 +8,7 @@
 #include <string>
 #include "optional.hpp"
 #include <stdexcept>
+#include "Util.h"
 
 template <typename T>
 std::vector<uint8_t> toBytes(T data)
@@ -124,6 +125,7 @@ nonstd::optional<std::tuple<Args...>> deserialize(std::vector<uint8_t> vec)
     }
     catch(const std::exception& e)
     {
+        log(e.what(), Loglevel::error);
         return nonstd::nullopt;
     }
 }
@@ -137,6 +139,7 @@ nonstd::optional<std::tuple<Args...>> deserialize(uint8_t* data, uint8_t* end)
     }
     catch(const std::exception& e)
     {
+        log(e.what(), Loglevel::error);
         return nonstd::nullopt;
     }
 }

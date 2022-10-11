@@ -5,6 +5,7 @@
 #include "RemoteValue.h"
 #include "ComposedAttribute.h"
 #include <functional>
+#include "Taskbuffer.h"
 
 extern BLEUUID serviceUUID;
 extern BLEClient *bleClient;
@@ -13,23 +14,6 @@ extern bool connectionReady;
 
 bool loadCharacteristics(BLERemoteService* service);
 
-struct TaskBuffer
-{
-    SemaphoreHandle_t semaphore;
-    std::vector<std::function<void(void)>> tasks;
-
-    void addTask(std::function<void(void)> task);
-    void executeTasks();
-
-    TaskBuffer()
-    {
-        semaphore = xSemaphoreCreateBinary();
-        xSemaphoreGive(semaphore);
-    }
-};
-
-extern TaskBuffer taskBuffer;
-
 template<typename T, ComposedAttribute<T>* attribute>
 void notifyComposedAttribute(BLERemoteCharacteristic* remoteCharacteristic, uint8_t* data, size_t length, bool isNotify)
 {
@@ -37,8 +21,6 @@ void notifyComposedAttribute(BLERemoteCharacteristic* remoteCharacteristic, uint
         attribute->update();
     });
 }
-
-
 
 template<typename T, void (*Fun)(T)>
 void notifyCallback(BLERemoteCharacteristic* remoteCharacteristic, uint8_t* data, size_t length, bool isNotify)

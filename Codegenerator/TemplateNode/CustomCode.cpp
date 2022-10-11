@@ -39,3 +39,7 @@ void {{node.name}}::onChange_{{v.name}}({{v.type}} value)
 {
 }
 {% endfor %}
+
+void log(const char* message, Loglevel::Loglevel loglevel)
+{
+}

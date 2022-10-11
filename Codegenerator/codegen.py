@@ -78,6 +78,7 @@ for server in config.get("ble_servers", []):
 
 templateDirShared = os.path.join(codeGenDir, "TemplateNode")
 templateFilesSrc = [
+    "Taskbuffer.h",
     "ComposedAttributeAbstract.h", "ComposedAttribute.h",
     "RemoteFunctionAbstract.h",
     "RemoteValue.h", "picosha2.h",

@@ -11,7 +11,7 @@ void Setup()
 void Loop()
 {
     if (isConnected())
-    {
+    {/*
         std::vector<int> arg;
         arg.push_back(1);
         arg.push_back(5);
@@ -31,7 +31,7 @@ void Loop()
         else
         {
             Serial.println("Error calling function");
-        }
+        }*/
         testString.set("Hello cruel world");
 
         auto vec = VectorTest::testVector.get();
@@ -72,4 +72,13 @@ std::string StringTest::greet(std::string forename)
     Serial.print("Say hello to: ");
     Serial.println(forename.c_str());
     return std::string("Hello, ") + forename;
+}
+
+void log(const char* message, Loglevel::Loglevel loglevel)
+{
+    if (loglevel >= Loglevel::debug)
+    {
+        Serial.print("Log: ");
+        Serial.println(message);
+    }
 }

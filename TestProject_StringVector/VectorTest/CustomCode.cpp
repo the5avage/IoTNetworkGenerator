@@ -14,7 +14,7 @@ int count = 0;
 void Loop()
 {
     if (isConnected())
-    {
+    {/*
         auto reply = StringTest::greet(std::string("Rene"));
         if (reply)
         {
@@ -25,9 +25,12 @@ void Loop()
         else
         {
             Serial.println("Error calling function");
-        }
+        }*/
+        
         counts.push_back(count++);
         testVector.set(counts);
+        Serial.println("Set testvector");
+        /*
         auto replyStr = StringTest::testString.get();
         if (replyStr)
         {
@@ -37,7 +40,7 @@ void Loop()
         else
         {
             Serial.println("Error, cant get teststring");
-        }
+        }*/
     }
     else
     {
@@ -67,4 +70,13 @@ std::vector<int> VectorTest::append42(std::vector<int> array)
     Serial.println("]");
     array.push_back(42);
     return array;
+}
+
+void log(const char* message, Loglevel::Loglevel loglevel)
+{
+    if (loglevel >= Loglevel::debug)
+    {
+        Serial.print("Log: ");
+        Serial.println(message);
+    }
 }

@@ -5,6 +5,7 @@
 #include "Serialize.h"
 #include "optional.hpp"
 #include "picosha2.h"
+#include "Util.h"
 
 template <typename T>
 class ComposedAttributeAbstract
@@ -28,6 +29,7 @@ public:
 
         if (data.size() < 33)
         {
+            log("Expected at least 33 bytes data for composed attribute", Loglevel::debug);
             return; // need at least hash value + 1 byte for valid data
         }
 
@@ -40,6 +42,9 @@ public:
         {
             if (calculatedHash[i] != sendedHash[i])
             {
+                log("Hash mismatch of composed attribute", Loglevel::debug);
+                log(picosha2::bytes_to_hex_string(data).c_str(), Loglevel::debug);
+                log(picosha2::bytes_to_hex_string(serializedData).c_str(), Loglevel::debug);
                 return;
             }
         }
@@ -47,6 +52,7 @@ public:
         auto deserialized = deserialize<T>(serializedData);
         if (!deserialized.has_value())
         {
+            log("Cannot deserialize value of composed attribute", Loglevel::debug);
             return;
         }
         cachedValue = std::get<0>(deserialized.value());
