@@ -21,7 +21,13 @@ public:
         {
             return nonstd::nullopt;
         }
-        return std::get<0>(deserialize<T>((uint8_t*)rawValue.data()));
+        uint8_t* data = (uint8_t*)rawValue.data();
+        auto des = deserialize<T>(data, data + rawValue.size());
+        if (!des.has_value())
+        {
+            return nonstd::nullopt;
+        }
+        return std::get<0>(des.value());
     }
 
     RemoteValueReadOnly(BLERemoteCharacteristic* characteristic) : characteristic(characteristic) {}

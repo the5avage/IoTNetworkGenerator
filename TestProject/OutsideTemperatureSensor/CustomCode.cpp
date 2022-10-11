@@ -56,3 +56,7 @@ int OutsideTemperatureSensor::getTimeSinceStart()
     Serial.println("Time since start was called");
     return millis();
 }
+
+void log(const char* message, Loglevel::Loglevel loglevel)
+{
+}

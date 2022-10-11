@@ -46,3 +46,7 @@ void OnDisconnect()
 {
     Serial.println("Disconnected from server");
 }
+
+void log(const char* message, Loglevel::Loglevel loglevel)
+{
+}

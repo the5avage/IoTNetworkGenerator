@@ -36,7 +36,7 @@ bool loadCharacteristics(BLERemoteService* service)
     {
         return false;
     }
-    {{thisNode.name}}::{{v.name}} = RemoteValue<{{v.type}}>(tmpCharacteristic);
+    {{node.name}}::{{v.name}} = RemoteValueReadOnly<{{v.type}}>(tmpCharacteristic);
             {% if v.isObserved is defined %}
     tmpCharacteristic->registerForNotify(notifyCallback<{{v.type}}, {{node.name}}::onChange_{{v.name}}>);
             {% endif %}

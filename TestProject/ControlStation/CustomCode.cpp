@@ -12,7 +12,7 @@ void Loop()
 {
     if (isConnected())
     {
-        auto outsideTemp = OutsideTemperatureSensor::temperature.get()
+        auto outsideTemp = OutsideTemperatureSensor::temperature.get();
         if (outsideTemp.has_value())
         {
             Serial.print("Outside temperature: ");
@@ -23,7 +23,7 @@ void Loop()
             Serial.println("Error reading outside temperature");
         }
 
-        auto insideTemp = OutsideTemperatureSensor::temperature.get()
+        auto insideTemp = InsideTemperatureSensor::temperature.get();
         if (insideTemp.has_value())
         {
             Serial.print("Inside temperature: ");
@@ -72,4 +72,8 @@ void InsideTemperatureSensor::onChange_temperature(float value)
 {
     Serial.print("Outside temp changed to: ");
     Serial.println(value);
+}
+
+void log(const char* message, Loglevel::Loglevel loglevel)
+{
 }
