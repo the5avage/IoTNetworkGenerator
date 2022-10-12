@@ -1,0 +1,138 @@
+{
+    "mqtt_broker" :
+    {
+        "broker_address" : "192.168.178.40",
+        "broker_port" :"1883"
+    },
+    "ble_servers" :
+    [
+        {
+            "name": "Server"
+        }
+    ],
+    "nodes" :
+    [
+        {
+            "name" : "OutsideTemperatureSensor",
+            "communication_protocol" :
+            {
+                "name" : "BLE",
+                "server" : "Server"
+            },
+            "variables" :
+            [
+                {
+                    "name" : "temperature",
+                    "type" : "float"
+                },
+                {
+                    "name" : "tolerance",
+                    "type" : "float"
+                }
+            ]
+        },
+        {
+            "name" : "InsideTemperatureSensor",
+            "communication_protocol" :
+            {
+                "name" : "BLE",
+                "server" : "Server"
+            },
+            "variables" :
+            [
+                {
+                    "name" : "temperature",
+                    "type" : "float"
+                },
+                {
+                    "name" : "tolerance",
+                    "type" : "float",
+                    "default" : "0.1"
+                }
+            ]
+        },
+        {
+            "name" : "ControlStation",
+            "communication_protocol" :
+            {
+                "name" : "BLE",
+                "server" : "Server"
+            },
+            "variables" :
+            [
+                {
+                    "name" : "logMessage",
+                    "type" : "std::string"
+                },
+                {
+                    "name" : "automaticControl",
+                    "type" : "bool"
+                },
+                {
+                    "name" : "targetTemperature",
+                    "type" : "float"
+                }
+            ],
+            "using" : [
+                "OutsideTemperatureSensor",
+                "InsideTemperatureSensor",
+                "WindowMotor"
+            ],
+            "observe" : [
+                "OutsideTemperatureSensor::temperature"
+            ],
+	    "functions" :
+            [
+                {
+                    "name" : "setTargetTemperature",
+                    "params" :
+                    [
+                        {
+                            "name" : "value",
+                            "type" : "float"
+                        }
+                    ]
+                },
+                {
+                    "name" : "setAutomaticControl",
+                    "params" :
+                    [
+                        {
+                            "name" : "on",
+                            "type" : "bool"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name" : "WindowMotor",
+            "communication_protocol" :
+            {
+                "name" : "BLE",
+                "server" : "Server"
+            },
+            "variables" :
+            [
+                {
+                    "name" : "angle",
+                    "type" : "float"
+                }
+            ],
+            "functions" :
+            [
+                {
+                    "name" : "moveWindow",
+                    "params" :
+                    [
+                        {
+                            "name" : "targetAngle",
+                            "type" : "float"
+                        }
+                    ],
+                    "returnType" : "bool"
+                }
+            ]
+        }
+    ]
+}

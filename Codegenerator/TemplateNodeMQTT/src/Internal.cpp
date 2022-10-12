@@ -76,7 +76,7 @@ void updateValues(char* topic, byte* message, unsigned int length)
     if (!strcmp(topic, "{{thisNode.name}}/__call/{{fun.name}}"))
     {
         std::vector<uint8_t> data(message, message + length);
-    {% if fun.returnType is defined %}
+    {% if fun.returnType != "void" %}
         auto result = processFunctionCall<
             decltype({{thisNode.name}}::{{fun.name}}),
             {{fun.get('params', [])|map(attribute='type')|join(',')}}

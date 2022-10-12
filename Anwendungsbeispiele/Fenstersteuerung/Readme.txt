@@ -1,0 +1,1 @@
+python ..\..\Codegenerator\codegen.py Konfiguration1.json

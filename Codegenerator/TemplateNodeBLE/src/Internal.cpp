@@ -91,7 +91,7 @@ bool loadCharacteristics(BLERemoteService* service)
 {% for fun in thisNode.functions %}
     return_{{fun.name}} = service->getCharacteristic("{{fun.return_uuid}}");
     tmpCharacteristic = service->getCharacteristic("{{fun.call_uuid}}");
-    {% if fun.returnType is defined %}
+    {% if fun.returnType != "void" %}
     tmpCharacteristic->registerForNotify(notifyCallCallback<&return_{{fun.name}}, decltype({{thisNode.name}}::{{fun.name}}),
     {{ ([thisNode.name+'::'+fun.name] + fun.get('params', [])|map(attribute='type')|list) |join(',') }}>);
     {% else %}

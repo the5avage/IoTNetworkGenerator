@@ -64,6 +64,8 @@ for node in config["nodes"]:
     for f in node.get("functions", []):
         f["call_uuid"] = uuid.uuid5(root_uuid, f"{node['name']}::{f['name']}::call")
         f["return_uuid"] = uuid.uuid5(root_uuid, f"{node['name']}::{f['name']}::return")
+        if "returnType" not in f:
+            f["returnType"] = "void"
 
 for server in config.get("ble_servers", []):
     serviceUUID = str(uuid.uuid5(root_uuid, server["name"]))
