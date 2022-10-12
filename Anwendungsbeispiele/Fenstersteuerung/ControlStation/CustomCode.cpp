@@ -51,25 +51,25 @@ void Loop()
         auto outsideTemp = OutsideTemperatureSensor::temperature.get();
         if (outsideTemp.has_value())
         {
-            lcd.print("Out: ");
+            lcd.print("O: ");
             lcd.print(outsideTemp.value());
             lcd.print(" ");
         }
         else
         {
-            lcd.print("Out: Na ");
+            lcd.print("O: Na ");
             logMessage.set("Error reading outside temperature");
         }
 
         auto insideTemp = InsideTemperatureSensor::temperature.get();
         if (insideTemp.has_value())
         {
-            lcd.print("In: ");
+            lcd.print("I: ");
             lcd.print(insideTemp.value());
         }
         else
         {
-            lcd.print("In: Na");
+            lcd.print("I: Na");
             logMessage.set("Error reading inside temperature");
         }
 

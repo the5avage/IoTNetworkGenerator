@@ -51,11 +51,15 @@ void updateValues(char* topic, byte* message, unsigned int length)
     {% for v in node.variables %}
     if (!strcmp(topic, "{{node.name}}/{{v.name}}"))
     {
-        {{node.name}}::{{v.name}}.cachedValue = std::get<0>(deserialize<{{v.type}}>(message));
-        {{node.name}}::{{v.name}}.hasValue = true;
+        auto des = deserialize<{{v.type}}>(message, message + length);
+        if (des.has_value())
+        {
+            {{node.name}}::{{v.name}}.cachedValue = std::get<0>(des.value());
+            {{node.name}}::{{v.name}}.hasValue = true;
         {% if v.isObserved is defined %}
-        {{node.name}}::onChange_{{v.name}}({{node.name}}::{{v.name}}.cachedValue);
+            {{node.name}}::onChange_{{v.name}}({{node.name}}::{{v.name}}.cachedValue);
         {% endif %}
+        }
         return;
     }
     {% endfor %}

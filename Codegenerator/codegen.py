@@ -76,7 +76,6 @@ for server in config.get("ble_servers", []):
 
 templateDirShared = os.path.join(codeGenDir, "TemplateNode")
 templateFilesSrc = [
-    "Taskbuffer.h",
     "ComposedAttributeAbstract.h", "ComposedAttribute.h",
     "RemoteFunctionAbstract.h",
     "RemoteValue.h", "picosha2.h",
@@ -112,6 +111,7 @@ def generateNode(thisNode, templateEnv):
     com = thisNode["communication_protocol"]
     if com["name"] == "BLE":
         nodeConfig['service_uuid'] = list(filter(lambda x: x["name"] == com["server"], config["ble_servers"]))[0]["service_uuid"]
+        copyTemplateFile("Taskbuffer.h", os.path.join(nodeDirSrc, "Taskbuffer.h"), nodeConfig, templateEnv)
 
     for template in templateFilesSrc:
         copyTemplateFile(template, os.path.join(nodeDirSrc, template), nodeConfig, templateEnv)

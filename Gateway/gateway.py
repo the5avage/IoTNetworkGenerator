@@ -126,7 +126,7 @@ def on_message(client, userdata, message):
             return
 
         for node in config["nodes"]:
-            for fun in node["functions"]:
+            for fun in node.get("functions", []):
                 if functionName == fun["name"]:
                     tag, data =  serialize.detagFunction(message.payload)
                     expectedTag = fun["callTag"]
@@ -134,7 +134,11 @@ def on_message(client, userdata, message):
                     if (tag.rollingNumber != expectedTag.rollingNumber or tag.calleeUUID != expectedTag.calleeUUID.bytes):
                         print("Received functin result does not correspond to sended call")
                         return
-                    fun["returnValue"] = serialize.deserialize(data, fun["returnType"])
+
+                    if "returnType" in fun:
+                        fun["returnValue"] = serialize.deserialize(data, fun["returnType"])
+                    else:
+                        fun["returnValue"] = "Success"
                     print("Got function return value")
                     print(fun["returnValue"])
                     client.unsubscribe(message.topic)
