@@ -1,0 +1,54 @@
+{
+    "mqtt_broker" :
+    {
+        "broker_address" : "192.168.178.40",
+        "broker_port" :"1883"
+    },
+    "nodes" :
+    [
+        {
+            "name" : "Receiver",
+            "communication_protocol" :
+            {
+                "name" : "MQTT",
+                "ssid" : "FRITZ!Box 7430 KX",
+                "password" : "92648877368773613105"
+            },
+            "functions" :
+            [
+                {
+                    "name" : "inputStream",
+                    "params" :
+                    [
+                        {
+                            "name" : "data",
+                            "type" : "std::vector<uint8_t>"
+                        },
+                        {
+                            "name" : "isFirstPackage",
+                            "type" : "bool"
+                        },
+                        {
+                            "name" : "isLastPackage",
+                            "type" : "bool"
+                        }
+                    ],
+                    "returnType" : "bool"
+                }
+            ]
+        },
+        {
+            "name" : "Sender",
+            "communication_protocol" :
+            {
+                "name" : "MQTT",
+                "ssid" : "FRITZ!Box 7430 KX",
+                "password" : "92648877368773613105"
+            },
+            "using" : [
+                "Receiver"
+            ]
+        }
+    ]
+}
+

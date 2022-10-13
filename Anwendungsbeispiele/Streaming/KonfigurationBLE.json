@@ -1,0 +1,53 @@
+{
+    "ble_servers" :
+    [
+        {
+            "name": "Server"
+        }
+    ],
+    "nodes" :
+    [
+        {
+            "name" : "Receiver",
+            "communication_protocol" :
+            {
+                "name" : "BLE",
+                "server" : "Server"
+            },
+            "functions" :
+            [
+                {
+                    "name" : "inputStream",
+                    "params" :
+                    [
+                        {
+                            "name" : "data",
+                            "type" : "std::vector<uint8_t>"
+                        },
+                        {
+                            "name" : "isFirstPackage",
+                            "type" : "bool"
+                        },
+                        {
+                            "name" : "isLastPackage",
+                            "type" : "bool"
+                        }
+                    ],
+                    "returnType" : "bool"
+                }
+            ]
+        },
+        {
+            "name" : "Sender",
+            "communication_protocol" :
+            {
+                "name" : "BLE",
+                "server" : "Server"
+            },
+            "using" : [
+                "Receiver"
+            ]
+        }
+    ]
+}
+

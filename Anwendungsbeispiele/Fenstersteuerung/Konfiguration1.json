@@ -4,20 +4,15 @@
         "broker_address" : "192.168.178.40",
         "broker_port" :"1883"
     },
-    "ble_servers" :
-    [
-        {
-            "name": "Server"
-        }
-    ],
     "nodes" :
     [
         {
             "name" : "OutsideTemperatureSensor",
             "communication_protocol" :
             {
-                "name" : "BLE",
-                "server" : "Server"
+                "name" : "MQTT",
+                "ssid" : "FRITZ!Box 7430 KX",
+                "password" : "92648877368773613105"
             },
             "variables" :
             [
@@ -35,8 +30,9 @@
             "name" : "InsideTemperatureSensor",
             "communication_protocol" :
             {
-                "name" : "BLE",
-                "server" : "Server"
+                "name" : "MQTT",
+                "ssid" : "FRITZ!Box 7430 KX",
+                "password" : "92648877368773613105"
             },
             "variables" :
             [
@@ -55,8 +51,9 @@
             "name" : "ControlStation",
             "communication_protocol" :
             {
-                "name" : "BLE",
-                "server" : "Server"
+                "name" : "MQTT",
+                "ssid" : "FRITZ!Box 7430 KX",
+                "password" : "92648877368773613105"
             },
             "variables" :
             [
@@ -109,8 +106,9 @@
             "name" : "WindowMotor",
             "communication_protocol" :
             {
-                "name" : "BLE",
-                "server" : "Server"
+                "name" : "MQTT",
+                "ssid" : "FRITZ!Box 7430 KX",
+                "password" : "92648877368773613105"
             },
             "variables" :
             [

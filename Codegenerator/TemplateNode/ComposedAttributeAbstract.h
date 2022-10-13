@@ -42,9 +42,8 @@ public:
         {
             if (calculatedHash[i] != sendedHash[i])
             {
-                log("Hash mismatch of composed attribute", Loglevel::debug);
-                log(picosha2::bytes_to_hex_string(data).c_str(), Loglevel::debug);
-                log(picosha2::bytes_to_hex_string(serializedData).c_str(), Loglevel::debug);
+                std::string errMsg = "Hash mismatch of composed attribute. Data: " + picosha2::bytes_to_hex_string(data);
+                log(errMsg.c_str(), Loglevel::error);
                 return;
             }
         }

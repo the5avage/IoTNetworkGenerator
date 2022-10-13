@@ -1,0 +1,42 @@
+{
+    "ble_servers" :
+    [
+        {
+            "name": "Server"
+        }
+    ],
+    "nodes" :
+    [
+        {
+            "name" : "Receiver",
+            "communication_protocol" :
+            {
+                "name" : "BLE",
+                "server" : "Server"
+            },
+            "using" : [
+                "Sender"
+            ]
+        },
+        {
+            "name" : "Sender",
+            "communication_protocol" :
+            {
+                "name" : "BLE",
+                "server" : "Server"
+            },
+            "variables" :
+            [
+                {
+                    "name" : "testVector",
+                    "type" : "std::vector<int>",
+                    "composed" : {
+                        "size" : 64,
+                        "length" : 5
+                    }
+                }
+            ]
+        }
+    ]
+}
+
