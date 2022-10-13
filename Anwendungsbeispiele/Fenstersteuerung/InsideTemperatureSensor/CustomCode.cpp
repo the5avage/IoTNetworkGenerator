@@ -34,6 +34,7 @@ void Loop()
 void OnConnect()
 {
     Serial.println("Connected to server");
+    tolerance.set(0.1);
 }
 
 void OnDisconnect()

@@ -7,7 +7,6 @@ class MyClientCallback : public BLEClientCallbacks
 {
     void onConnect(BLEClient *pclient)
     {
-        OnConnect();
     }
 
     void onDisconnect(BLEClient *pclient)
@@ -16,7 +15,9 @@ class MyClientCallback : public BLEClientCallbacks
         delete device;
         device = nullptr;
         //Serial.println("onDisconnect");
-        OnDisconnect();
+        taskBuffer.addTask([](){
+            OnDisconnect();
+        });
     }
 };
 
@@ -73,6 +74,7 @@ void connectToServer(BLEAdvertisedDevice* device)
         return;
     }
     //Serial.println(" - Found all characteristic");
+    OnConnect();
     connectionReady = true;
     return;
 }

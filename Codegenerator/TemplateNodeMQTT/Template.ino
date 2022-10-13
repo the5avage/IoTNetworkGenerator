@@ -59,7 +59,11 @@ void reconnect()
         {
             Serial.println("connected");
             subscribeToTopics(&client);
-            connectionReady = true;
+            if (!connectionReady)
+            {
+                OnConnect();
+                connectionReady = true;
+            }
         }
         else
         {
@@ -75,7 +79,11 @@ void loop()
 {
     if (!client.connected())
     {
-        connectionReady = false;
+        if (connectionReady)
+        {
+            OnDisconnect();
+            connectionReady = false;
+        }
         reconnect();
     }
     client.loop();

@@ -13,7 +13,6 @@ bool _targetTemperature = 23.0;
 
 void Setup()
 {
-    Serial.begin(115200);
     lcd.init();
     lcd.backlight();
 }
@@ -73,6 +72,13 @@ void Loop()
             logMessage.set("Error reading inside temperature");
         }
 
+        if (_automaticControl)
+        {
+            lcd.setCursor(0, 1);
+            lcd.print("Target: ");
+            lcd.print(23.0);
+        }
+
         if (_automaticControl && insideTemp.has_value() && outsideTemp.has_value())
         {
             float in = insideTemp.value();
@@ -104,12 +110,7 @@ void Loop()
 
             if (!WindowMotor::moveWindow(newAngle))
             {
-                Serial.println("Move window failed");
                 logMessage.set("WindowMotor not available.");
-            }
-            else
-            {
-                Serial.println("Move window worked");
             }
         }
 
