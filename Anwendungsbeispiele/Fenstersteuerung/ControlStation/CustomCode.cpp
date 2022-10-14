@@ -139,7 +139,7 @@ void OnDisconnect()
 
 void OutsideTemperatureSensor::onChange_temperature(float value)
 {
-    unsigned long outsideTempLastUpdate = millis();
+    outsideTempLastUpdate = millis();
 }
 
 void ControlStation::setTargetTemperature(float value)
