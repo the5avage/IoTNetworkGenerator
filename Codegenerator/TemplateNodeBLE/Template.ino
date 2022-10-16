@@ -2,6 +2,7 @@
 #include "src/RemoteValues.h"
 #include "src/Internal.h"
 #include "CustomCode.h"
+#include "src/Util.h"
 
 class MyClientCallback : public BLEClientCallbacks
 {
@@ -37,7 +38,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks
 /* Start connection to the BLE Server */
 void connectToServer(BLEAdvertisedDevice* device)
 {
-    log("Forming a connection to " + device->getAddress().toString(), Loglevel::status);
+    log("Try connecting to server", Loglevel::status);
 
     bool result = bleClient->connect(device);
     if (!result)

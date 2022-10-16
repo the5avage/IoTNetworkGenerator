@@ -6,6 +6,7 @@
 #include "CustomCode.h"
 #include "src/GenCode.h"
 #include "Internal.h"
+#include "src/Util.h"
 
 WiFiClient espClient;
 PubSubClient client(espClient);
