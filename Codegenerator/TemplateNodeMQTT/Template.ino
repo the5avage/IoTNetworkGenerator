@@ -20,12 +20,11 @@ static void taskLoop(void* param)
 
 void setup()
 {
-    //Serial.begin(115200);
+    Setup();
     setup_wifi();
     client.setServer(broker_address, broker_port);
     client.setCallback(updateValues);
     initializeValues(&client);
-    Setup();
     xTaskCreatePinnedToCore(taskLoop, "User Loop", 10000, nullptr, 0, nullptr, !xPortGetCoreID());
 }
 
@@ -33,11 +32,7 @@ void setup_wifi()
 {
     delay(10);
     // We start by connecting to a WiFi network
-    Serial.println();
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
-
-    WiFi.begin(ssid, password);
+    log("Connecting to Wifi", Loglevel::status);
 
     while (WiFi.status() != WL_CONNECTED)
     {
@@ -45,31 +40,27 @@ void setup_wifi()
         Serial.print(".");
     }
 
-    Serial.println("WiFi connected");
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
+    log("Wifi connected", Loglevel::status);
 }
 
 void reconnect()
 {
     while (!client.connected())
     {
-        Serial.print("Attempting MQTT connection...");
+        log("Attemting mqtt connection", Loglevel::status);
         if (client.connect(client_name))
         {
-            Serial.println("connected");
             subscribeToTopics(&client);
             if (!connectionReady)
             {
+                log("connected to server", Loglevel::status);
                 OnConnect();
                 connectionReady = true;
             }
         }
         else
         {
-            Serial.print("failed, rc=");
-            Serial.print(client.state());
-            Serial.println(" try again in 5 seconds");
+            log("connection to server failed", Loglevel::error);
             delay(5000);
         }
     }

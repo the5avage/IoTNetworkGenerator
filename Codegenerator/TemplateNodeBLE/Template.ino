@@ -14,7 +14,7 @@ class MyClientCallback : public BLEClientCallbacks
         connectionReady = false;
         delete device;
         device = nullptr;
-        //Serial.println("onDisconnect");
+        log("disconnected from server", Loglevel::status);
         taskBuffer.addTask([](){
             OnDisconnect();
         });
@@ -25,9 +25,7 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks
 {
   void onResult(BLEAdvertisedDevice advertisedDevice)
   {
-    //Serial.print("BLE Advertised Device found: ");
-    //Serial.println(advertisedDevice.toString().c_str());
-
+    log("BLE Advertised Device found: ", Loglevel::status);
     if (advertisedDevice.haveServiceUUID() && advertisedDevice.isAdvertisingService(serviceUUID))
     {
       BLEDevice::getScan()->stop();
@@ -39,20 +37,19 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks
 /* Start connection to the BLE Server */
 void connectToServer(BLEAdvertisedDevice* device)
 {
-    //Serial.print("Forming a connection to ");
-    Serial.println(device->getAddress().toString().c_str());
+    log("Forming a connection to " + device->getAddress().toString(), Loglevel::status);
 
     bool result = bleClient->connect(device);
     if (!result)
     {
-        //Serial.println(" - Connected to server failed");
+        log("Connecting to device failed", Loglevel::error);
         return;
     }
 
     result = bleClient->setMTU(517);
     if (!result)
     {
-        //Serial.println(" - Setting mtu failed");
+        log("Setting MTU failed", Loglevel::error);
         return;
     }
 
@@ -60,20 +57,18 @@ void connectToServer(BLEAdvertisedDevice* device)
     BLERemoteService *remoteService = bleClient->getService(serviceUUID);
     if (remoteService == nullptr)
     {
-        //Serial.print("Failed to find our service UUID: ");
-        //Serial.println(serviceUUID.toString().c_str());
+        log("Failed to get service handle", Loglevel::error);
         bleClient->disconnect();
         return;
     }
-    //Serial.println(" - Found our service");
 
     if (!loadCharacteristics(remoteService))
     {
-        //Serial.print("Failed to find characteristics");
+        log("Failed to get characteristics handles", Loglevel::error);
         bleClient->disconnect();
         return;
     }
-    //Serial.println(" - Found all characteristic");
+    log("Connected to server", Loglevel::error);
     OnConnect();
     connectionReady = true;
     return;
@@ -89,13 +84,11 @@ static void taskLoop(void* param)
 
 void setup()
 {
-    //Serial.begin(115200);
-    //Serial.println("Starting Arduino BLE Client application...");
+    Setup();
     BLEDevice::init("ESP32-BLE-Client");
     BLEDevice::setMTU(517);
 
     bleClient = BLEDevice::createClient();
-    //Serial.println(" - Created client");
 
     bleClient->setClientCallbacks(new MyClientCallback());
     BLEScan* scan = BLEDevice::getScan();
@@ -104,9 +97,6 @@ void setup()
     scan->setWindow(449);
     scan->setActiveScan(true);
 
-    Setup();
-    //Serial.print("MTU size: ");
-    //Serial.println(BLEDevice::getMTU());
     xTaskCreatePinnedToCore(taskLoop, "User Loop", 10000, nullptr, 0, nullptr, !xPortGetCoreID());
 }
 
@@ -114,18 +104,16 @@ void loop()
 {
     if (!bleClient->isConnected() && device)
     {
-        //Serial.println("Connect to server");
         connectToServer(device);
     }
     else if (!bleClient->isConnected())
     {
-        //Serial.println("Scan for server ...");
+        log("Scan for server ...", Loglevel::status);
         BLEDevice::getScan()->start(5);
     }
     else
     {
         taskBuffer.executeTasks();
         delay(50);
-        //Serial.println("connected to server");
     }
 }
